@@ -1,0 +1,10 @@
+*
+Cars/
+Carshop/
+CaveModels/
+chests/
+
+!*.verse
+
+!*/
+
