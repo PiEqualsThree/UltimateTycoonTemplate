@@ -39,8 +39,8 @@ player_stats<public> := class<final><persistable>:
     PumpkinCarvingStats<public> : pumpkin_carving_stats = pumpkin_carving_stats{}
 
 tycoon_currency_stats<public> := class<final><persistable>:
-    Cash<public> : int = 0
-    Candy<public> : int = 0
+    Cash<public> : int = 1000000
+    Candy<public> : int = 10000
     Rebirths<public> : int = 0
     BlingBucks<public> : int = 0
 

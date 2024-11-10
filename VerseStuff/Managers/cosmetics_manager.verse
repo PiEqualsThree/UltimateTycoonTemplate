@@ -10,90 +10,13 @@ using { /UnrealEngine.com/Temporary/SpatialMath }
 using { /UnrealEngine.com/Temporary }
 using { Cosmetics }
 
-cosmetics_manager<public> := class(creative_device):
-    @editable       AuraClearChannel : channel_device = channel_device{}
-    @editable       VFXCosmeticClearChannel : channel_device = channel_device{}
-    @editable       AuraVFXPowerups : []visual_effect_powerup_device = array{}
-    @editable       VFXCosmeticPowerups : []visual_effect_powerup_device = array{}
-    @editable       VehicleVFXPowerups : []visual_effect_powerup_device = array{}
+cosmetics_manager<public> := class<concrete>:  
+    @editable       AuraSelectionManager : aura_selection_manager = aura_selection_manager{}
 
-    var PlayerManager : player_manager = player_manager{}
+    ResetEvent : event() = event(){}
 
-    UniqueBegin() : void =
-        {}
+    var MaybeCosmeticData : ?global_cosmetic_data = false
 
-    Init() : void =
-        {}
-
-    EquipAura<public>(Owner : custom_player, AuraIndex : int) : void =
-        if ( AuraVFX := AuraVFXPowerups[AuraIndex]):
-            Print("Equipping Aura {AuraIndex}")
-            set Owner.GetCosmeticsData().SelectedAuraIndex = AuraIndex
-            AuraVFX.Pickup(Owner.Player)
-        else if ( AuraIndex = -1):
-            AuraClearChannel.Transmit(option{Owner.Agent})
-        else:
-            Print("Unkown Aura Index {AuraIndex}")
-
-    EquipVFXCosmetic<public>(Owner : custom_player, VFXCosmeticIndex : int) : void =
-        if ( VFXPowerup := VFXCosmeticPowerups[VFXCosmeticIndex]):
-            Print("Equipping VFX Cosmetic {VFXCosmeticIndex}")
-            set Owner.GetCosmeticsData().SelectedVFXCosmeticIndex = VFXCosmeticIndex
-            VFXPowerup.Pickup(Owner.Player)
-        else if ( VFXCosmeticIndex = -1):
-            VFXCosmeticClearChannel.Transmit(option{Owner.Agent})
-        else:
-            Print("Unkown vfx {VFXCosmeticIndex}")
-
-    UnlockAura<public>(Owner : custom_player, AuraIndex : int) : void =
-        if ( set Owner.GetCosmeticsData().UnlockedAuraIndexMap[AuraIndex] = true):
-            set Owner.GetCosmeticsData().SortedAuraIndices = SortIndicesMap(Owner.GetCosmeticsData().UnlockedAuraIndexMap)
-
-    UnlockVFXCosmetic<public>(Owner : custom_player, VFXCosmeticIndex : int) : void =
-        if ( set Owner.GetCosmeticsData().UnlockedVFXCosmeticIndexMap[VFXCosmeticIndex] = true):
-            set Owner.GetCosmeticsData().SortedVFXCosmeticIndices = SortIndicesMap(Owner.GetCosmeticsData().UnlockedVFXCosmeticIndexMap)
-
-    Update(Owner : custom_player)<suspends> : void =
-        sync:
-            loop:
-                Sleep(15.0)
-                for ( CustomPlayer : PlayerManager.GetCustomPlayers() ):
-                    spawn {ReapplyActiveAura(CustomPlayer)}
-                    spawn {ReapplyActiveVFXCOsmetic(CustomPlayer)}
-                
-            loop:
-                CustomEliminationResult := PlayerManager.CustomEliminationEvent.Await()
-                spawn{ ReapplyActiveAura(CustomEliminationResult.CustomEliminatedPlayer, ?Delay := 3.5)}
-                spawn{ ReapplyActiveVFXCOsmetic(CustomEliminationResult.CustomEliminatedPlayer, ?Delay := 3.5)}
-                
-    ReapplyActiveAura(Owner : custom_player, ?Delay : float = -1.0)<suspends> : void =
-        Sleep(Delay)
-        race:
-            Sleep(7.0) <# Timeout #>
-            loop:
-                if ( Owner.FortCharacter.IsActive[]):
-                    EquipAura(Owner, Owner.GetCosmeticsData().SelectedAuraIndex)
-                    break
-                else:
-                    Sleep(0.0)
-            
-    ReapplyActiveVFXCOsmetic(Owner : custom_player, ?Delay : float = -1.0)<suspends> : void =
-        Sleep(Delay)
-        race:
-            Sleep(7.0) <# Timeout #>
-            loop:
-                if ( Owner.FortCharacter.IsActive[]):
-                    EquipVFXCosmetic(Owner, Owner.GetCosmeticsData().SelectedVFXCosmeticIndex)
-                    break
-                else:
-                    Sleep(0.0)
-
-    SortIndicesMap<public>(Map : [int]logic) : []int =
-        Unsorted := for ( N->Bool : Map, Bool? ) do N
-        Print("Sorting {Unsorted.Length} Auras")
-        return SortBy(Unsorted, IntCompare)
-            
-player_cosmetics_data<public> := class:
     var UnlockedAuraIndexMap<public> : [int]logic = map{ }
     var SortedAuraIndices<public> : []int = array{}
     var SelectedAuraIndex<public> : int = -1    
@@ -101,18 +24,103 @@ player_cosmetics_data<public> := class:
     var UnlockedVFXCosmeticIndexMap<public> : [int]logic = map{}
     var SortedVFXCosmeticIndices<public> : []int = array{}
     var SelectedVFXCosmeticIndex<public> : int = -1
-    
-using { Cars}
-VehicleMeshes<public> : []mesh = array:
-    LancerEvo.SM_Vehicle_Lancer
-    Supra.SM_Vehicle_Supra
-    NissanZ.SM_Vehicle_NissanZ
-    McLaren.SM_Vehicle_McLarenF1
-    Cybertruck.SM_Vehicle_Cybertruck
-    Corvette.SM_Vehicle_Corvette
-    Porsche.SM_Vehicle_Porsche_911
-    Bugatti.SM_Vehicle_Bugatti
-    Lamborghini.SM_Vehicle_Lamborghini
-    
+
+    UniqueBegin(CosmeticData : global_cosmetic_data) : void =
+        set MaybeCosmeticData = option{CosmeticData}
+        AuraSelectionManager.UniqueBegin()
+
+    Init(TycoonManager : tycoon_manager) : void =
+        AuraSelectionManager.Init()
+
+    LoadData(Owner : custom_player, PlayerStats : player_stats)<suspends> : void =
+        AuraSelectionManager.LoadData(Owner, Self)
+
+    Update(Owner : custom_player)<suspends> : void =
+        race:
+            ResetEvent.Await()
+            loop:
+                Sleep(15.0)
+                spawn {ReapplyActiveAura(Owner)}
+                spawn {ReapplyActiveVFXCOsmetic(Owner)}
+                
+            loop:
+                Owner.FortCharacter.EliminatedEvent().Await()
+                spawn{ ReapplyActiveAura(Owner, ?Delay := 3.5)}
+                spawn{ ReapplyActiveVFXCOsmetic(Owner, ?Delay := 3.5)}
+
+    EquipAura<public>(Owner : custom_player, AuraIndex : int) : void = 
+        if ( CosmeticData := MaybeCosmeticData?):
+            if ( AuraVFX := CosmeticData.AuraVFXPowerups[AuraIndex]):
+                Print("Equipping Aura {AuraIndex}")
+                set SelectedAuraIndex = AuraIndex
+                AuraVFX.Pickup(Owner.Player)
+            else if ( AuraIndex = -1):
+                CosmeticData.AuraClearChannel.Transmit(option{Owner.Agent})
+            else:
+                Print("Unkown Aura Index {AuraIndex}")
+        else:
+            Print("Error: No cosmetic data set for cosmetic manager!")
+
+    EquipVFXCosmetic<public>(Owner : custom_player, VFXCosmeticIndex : int) : void = 
+        if ( CosmeticData := MaybeCosmeticData?):
+            if ( VFXPowerup := CosmeticData.VFXCosmeticPowerups[VFXCosmeticIndex]):
+                Print("Equipping VFX Cosmetic {VFXCosmeticIndex}")
+                set SelectedVFXCosmeticIndex = VFXCosmeticIndex
+                VFXPowerup.Pickup(Owner.Player)
+            else if ( VFXCosmeticIndex = -1):
+                CosmeticData.VFXCosmeticClearChannel.Transmit(option{Owner.Agent})
+            else:
+                Print("Unkown vfx {VFXCosmeticIndex}")
+        else:
+            Print("Error: No cosmetic data set for cosmetic manager!")
+
+    UnlockAura<public>(Owner : custom_player, AuraIndex : int) : void =
+        if ( UnlockedAuraIndexMap[AuraIndex] = true):
+            set SortedAuraIndices = SortIndicesMap(UnlockedAuraIndexMap)
+
+    UnlockVFXCosmetic<public>(Owner : custom_player, VFXCosmeticIndex : int) : void =
+        if ( set UnlockedVFXCosmeticIndexMap[VFXCosmeticIndex] = true):
+            set SortedVFXCosmeticIndices = SortIndicesMap(UnlockedVFXCosmeticIndexMap)
 
 
+    ReapplyActiveAura(Owner : custom_player, ?Delay : float = -1.0)<suspends> : void = 
+        Sleep(Delay)
+        race:
+            Sleep(7.0) <# Timeout #>
+            loop:
+                if ( Owner.FortCharacter.IsActive[]):
+                    EquipAura(Owner, SelectedAuraIndex)
+                    break
+                else:
+                    Sleep(0.0)
+            
+    ReapplyActiveVFXCOsmetic(Owner : custom_player, ?Delay : float = -1.0)<suspends> : void = 
+        Sleep(Delay)
+        race:
+            Sleep(7.0) <# Timeout #>
+            loop:
+                if ( Owner.FortCharacter.IsActive[]):
+                    EquipVFXCosmetic(Owner, SelectedVFXCosmeticIndex)
+                    break
+                else:
+                    Sleep(0.0)
+
+    GetStats() : cosmetic_stats = 
+        cosmetic_stats:
+
+
+    Reset() : void =
+        ResetEvent.Signal()
+        AuraSelectionManager.Reset()
+        set UnlockedAuraIndexMap = map{}
+        set SortedAuraIndices = array{}
+        set SelectedAuraIndex = -1
+
+        set UnlockedVFXCosmeticIndexMap = map{}
+        set SortedVFXCosmeticIndices = array{}
+        set SelectedVFXCosmeticIndex = -1
+
+    SortIndicesMap<public>(Map : [int]logic) : []int =
+        Unsorted := for ( N->Bool : Map, Bool? ) do N
+        Print("Sorting {Unsorted.Length} Auras")
+        return SortBy(Unsorted, IntCompare)

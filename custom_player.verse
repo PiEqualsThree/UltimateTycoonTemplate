@@ -14,12 +14,9 @@ custom_player<public> := class<unique>:
     Agent<public> : agent
     FortCharacter<public> : fort_character
     TycoonLevel<public> : tycoon_level = tycoon_level{}
-    #PetSettings : pet_settings = pet_settings{}
-    #CosmeticSettings : cosmetic_settings = cosmetic_settings{}
     Canvas : canvas = canvas{}
     CurrencyWidgets : player_currency_widgets = player_currency_widgets{}
     IncomeStreamWidgets : player_income_stream_widgets = player_income_stream_widgets{}
-    CosmeticsData : player_cosmetics_data = player_cosmetics_data{}
     
     var<private> Cash : int = 0
     var<private> Candy : int = 0
@@ -46,8 +43,9 @@ custom_player<public> := class<unique>:
         set MaybeTycoonManager = option{TycoonManager}
         set Cash = Stats.CurrencyStats.Cash
         set Candy = Stats.CurrencyStats.Candy
-        set BlingBucks = Stats.CurrencyStats.BlingBucks
         set Rebirths = Stats.CurrencyStats.Rebirths
+        set BlingBucks = Stats.CurrencyStats.BlingBucks
+    
         set CurrencyMultiplier = Min(1.0 + Rebirths * 0.2, 4.0)
         
         CurrencyWidgets.Init(Self, Stats)
@@ -76,7 +74,6 @@ custom_player<public> := class<unique>:
     SetSubscribers(Amount : int) : void = set Candy = Amount
     SetBlingBucks(Amount : int) : void = set BlingBucks = Amount
     SetRebirths(Amount : int) : void = set Rebirths = Amount
-    #SetActiveFlyingChairCosmetic<public>(FlyingChairCosmetic : flying_chair) : void = set ActiveFlyingChairCosmetic = option{FlyingChairCosmetic}
   
     GetCanvas() : canvas = Canvas
     GetCash<public>()<transacts> : int = Cash
@@ -85,8 +82,5 @@ custom_player<public> := class<unique>:
     GetCurrencyMultiplier<public>()<transacts> : float = CurrencyMultiplier
     GetCurrencyWidgets<public>()<transacts> : player_currency_widgets = CurrencyWidgets
     GetIncomeStreamWidgets<public>()<transacts> : player_income_stream_widgets = IncomeStreamWidgets
-    # GetCosmeticSettings<public>()<transacts> : cosmetic_settings = CosmeticSettings
-    # GetActiveChairCosmetic<public>()<transacts><decides> : flying_chair = ActiveFlyingChairCosmetic?
-    GetCosmeticsData<public>()<transacts> : player_cosmetics_data = CosmeticsData
     GetPosition<public>()<transacts> : vector3 = FortCharacter.GetTransform().Translation
     GetRotation<public>()<transacts> : rotation = FortCharacter.GetTransform().Rotation

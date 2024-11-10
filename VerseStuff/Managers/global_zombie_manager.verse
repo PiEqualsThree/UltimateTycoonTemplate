@@ -8,7 +8,7 @@ using { /Verse.org/Colors }
 using { /UnrealEngine.com/Temporary/Diagnostics }
 using { /UnrealEngine.com/Temporary/SpatialMath }
 
-zombie_global_manager<public> := class(creative_device):
+global_zombie_manager<public> := class(creative_device):
     @editable       ZombieEliminationData : []zombie_type_elimination_data = array{}
     
     Init<public>(PlayerManager : player_manager, CurrencyManager : currency_manager, UIManager : user_interface_manager) : void =

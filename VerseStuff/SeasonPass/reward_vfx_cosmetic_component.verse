@@ -31,7 +31,7 @@ reward_vfx_cosmetic_component := class<concrete>(reward_component):
         EquipButton.Enable()
         spawn{ AwaitCosmeticEquip(Owner, TycoonManager.CosmeticsManager)}
 
-    AwaitCosmeticEquip(Owner : custom_player, ComseticsManager : test_c)<suspends> : void =
+    AwaitCosmeticEquip(Owner : custom_player, ComseticsManager : cosmetics_manager)<suspends> : void =
         race:
             ResetEvent().Await()
             loop:

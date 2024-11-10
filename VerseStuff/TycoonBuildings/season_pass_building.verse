@@ -13,8 +13,6 @@ season_pass_building<public> := class<concrete>(tycoon_building, purchasable, re
     @editable       ID : int = 0
     @editable       Price : int = 0
     @editable       TycoonSeasonPass<public> : season_pass = season_pass{}
-    @editable       AuraSelectionManager : aura_selection_manager = aura_selection_manager{}
-    
     @editable       PurchaseCurrencyType : currency_type = currency_type.Cash
     @editable       ContainerProp : creative_prop = creative_prop{}
     @editable       PurchaseButton : creative_prop = creative_prop{}
@@ -31,7 +29,6 @@ season_pass_building<public> := class<concrete>(tycoon_building, purchasable, re
     var PurchaseStatus : purchase_status = purchase_status.Locked
     # Run once per game start
     UniqueBegin<override>()<suspends> : void =
-        AuraSelectionManager.UniqueBegin()
         TycoonSeasonPass.UniqueBegin()
         set DefaultContainerPropTransform = ContainerProp.GetTransform()
         set DefaultPurchaseButtonTransform = PurchaseButton.GetTransform()
@@ -39,19 +36,16 @@ season_pass_building<public> := class<concrete>(tycoon_building, purchasable, re
     Init<override>(TycoonManager : tycoon_manager) : void =
         Print("INitializing Battle Pass")
         spawn{ TycoonSeasonPass.Init() }
-        #AuraSelectionManager.Init(TycoonManager.CosmeticsManager)
         if:
             ContainerProp.TeleportTo[DefaultContainerPropTransform.Translation - vector3{ Z := 3000.0}, DefaultContainerPropTransform.Rotation]
             PurchaseButton.TeleportTo[DefaultPurchaseButtonTransform.Translation - vector3{ Z := 3000.0}, DefaultPurchaseButtonTransform.Rotation]
 
     LoadData(Owner : custom_player, TycoonManager : tycoon_manager, PlayerStats : player_stats)<suspends> : void =
         TycoonSeasonPass.LoadData(Owner, TycoonManager, TycoonManager.PlayerStatsManager.GetStats(Owner.Player))
-        AuraSelectionManager.LoadData(Owner)
         
     Reset<override>() : void =
         set PurchaseStatus = purchase_status.Locked
         ResetEvent().Signal()
-        AuraSelectionManager.Reset()
         spawn{ TycoonSeasonPass.Reset() }
 
     Unlock<override>(Owner : custom_player, ?PlayAnimations : logic = true) : void =
@@ -71,8 +65,6 @@ season_pass_building<public> := class<concrete>(tycoon_building, purchasable, re
             if ( TycoonManager := Owner.MaybeTycoonManager?):
                 spawn{ LoadData(Owner, TycoonManager, TycoonManager.PlayerStatsManager.GetStats(Owner.Player))}
                 
-                
-
     ResetEvent<override>() : event() = BuildingResetEvent
     GetNextBuildingUnlockIDs<override>()<transacts> : []int = (ID >= 0 and array{ ID + 1 } or array{}) + NextBuildingUnlockIDs
     GetPurchaseCurrencyType<override>()<transacts> : currency_type = PurchaseCurrencyType

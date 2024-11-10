@@ -40,11 +40,11 @@ vehicle_manager<public> := class<concrete>(resetable):
     var CurrencyManager : currency_manager = currency_manager{}
     var SelectedVehicleID : int = -1
 
-    UniqueBegin<public>(<# TOD#>) : void = {}
-        # set DefaultVehicleDisplayPropTransform = VehicleDisplayProp.GetTransform()
-        # set DefaultVehicleSpawnerTransform = VehicleSpawner.GetTransform()
-        # set VehiclePreviewProp = (DefaultAsset := GetDefaultBlueprintAsset[GetSession()]) and SpawnProp(DefaultAsset, transform{})(0)? or creative_prop{} 
-        # for ( Vehicle : Vehicles, set VehicleIDMap[Vehicle.ID] = Vehicle ) do Vehicle.UniqueBegin(CosmeticData.VehicleVFXPowerups[Vehicle.ID] or visual_effect_powerup_device{}, VehicleVFXClearChannel)
+    UniqueBegin<public>(CosmeticData : global_cosmetic_data) : void = 
+        set DefaultVehicleDisplayPropTransform = VehicleDisplayProp.GetTransform()
+        set DefaultVehicleSpawnerTransform = VehicleSpawner.GetTransform()
+        set VehiclePreviewProp = (DefaultAsset := GetDefaultBlueprintAsset[GetSession()]) and SpawnProp(DefaultAsset, transform{})(0)? or creative_prop{} 
+        for ( Vehicle : Vehicles, set VehicleIDMap[Vehicle.ID] = Vehicle ) do Vehicle.UniqueBegin(CosmeticData.VehicleVFXPowerups[Vehicle.ID] or visual_effect_powerup_device{}, VehicleVFXClearChannel)
         
     Init<public>(TycoonManager : tycoon_manager) : void =
         Print("Init vehicle manager")

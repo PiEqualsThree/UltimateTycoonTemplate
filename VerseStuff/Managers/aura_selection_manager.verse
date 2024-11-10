@@ -27,43 +27,42 @@ aura_selection_manager<public> := class<concrete>:
         Billboard.HideText()
         Print("JFD;ak")
 
-    LoadData<public>(Owner : custom_player) : void =
-        #CosmeticsManager.UnlockAura(Owner, 0)
+    LoadData<public>(Owner : custom_player, CosmeticsManager : cosmetics_manager) : void =
+        CosmeticsManager.UnlockAura(Owner, 0)
         Billboard.ShowText()
         NPCSpawner.Enable()
-        spawn{Update(Owner)}
+        spawn{Update(Owner, CosmeticsManager)}
 
     Reset<public>() : void =
         NPCSpawner.DespawnAll(false)
         NPCSpawner.Disable()
         ResetEvent.Signal()
 
-    Update(Owner : custom_player)<suspends> : void =
+    Update(Owner : custom_player, CosmeticsManager : cosmetics_manager)<suspends> : void =
         AssignMannequin()
-        CosmeticData := Owner.GetCosmeticsData()
         Sleep(1.5)
         race:
             ResetEvent.Await()
             loop: <# Cycle aura left #>
                 Agent := CycleLeftButton.InteractedWithEvent.Await()
                 if ( Owner.Agent = Agent):
-                    set SelectedAuraArrayIndex = Mod[SelectedAuraArrayIndex - 1, CosmeticData.SortedAuraIndices.Length] or SelectedAuraArrayIndex
-                    set CurrentAuraIndex = CosmeticData.SortedAuraIndices[SelectedAuraArrayIndex] or CurrentAuraIndex
-                    PreviewAura(CurrentAuraIndex, CosmeticData.SortedAuraIndices)
+                    set SelectedAuraArrayIndex = Mod[SelectedAuraArrayIndex - 1, CosmeticsManager.SortedAuraIndices.Length] or SelectedAuraArrayIndex
+                    set CurrentAuraIndex = CosmeticsManager.SortedAuraIndices[SelectedAuraArrayIndex] or CurrentAuraIndex
+                    PreviewAura(CosmeticsManager, CurrentAuraIndex)
             loop:<# Cycle aura right #>
                 Agent := CycleRightButton.InteractedWithEvent.Await()
                 if ( Owner.Agent = Agent):
-                    set SelectedAuraArrayIndex = Mod[SelectedAuraArrayIndex + 1, CosmeticData.SortedAuraIndices.Length] or SelectedAuraArrayIndex
-                    set CurrentAuraIndex = CosmeticData.SortedAuraIndices[SelectedAuraArrayIndex] or CurrentAuraIndex
-                    PreviewAura(CurrentAuraIndex, CosmeticData.SortedAuraIndices)
+                    set SelectedAuraArrayIndex = Mod[SelectedAuraArrayIndex + 1, CosmeticsManager.SortedAuraIndices.Length] or SelectedAuraArrayIndex
+                    set CurrentAuraIndex = CosmeticsManager.SortedAuraIndices[SelectedAuraArrayIndex] or CurrentAuraIndex
+                    PreviewAura(CosmeticsManager, CurrentAuraIndex)
             loop: <# Equip Button #>
                 Agent := SelectButton.InteractedWithEvent.Await()
                 if ( Owner.Agent = Agent):
                     #CosmeticsManager.EquipAura(Owner, CurrentAuraIndex)
-                    PreviewAura(CurrentAuraIndex, CosmeticData.SortedAuraIndices)
+                    PreviewAura(CosmeticsManager, CurrentAuraIndex)
                     
             loop:
-                PreviewAura(CurrentAuraIndex, CosmeticData.SortedAuraIndices)
+                PreviewAura(CosmeticsManager, CurrentAuraIndex)
                 Sleep(10.0)
 
     AssignMannequin()<suspends> : void =
@@ -77,7 +76,7 @@ aura_selection_manager<public> := class<concrete>:
                 NPCSpawner.Spawn()
                 Sleep(5.0)
 
-    PreviewAura(AuraIndex : int, SortedAuraIndices : []int) : void =
+    PreviewAura(CosmeticsManager : cosmetics_manager, AuraIndex : int) : void =
         {}
         # if ( Agent := MannequinAgent?, AuraVFX := CosmeticsManager.AuraVFXPowerups[AuraIndex]):
         #     Billboard.SetText(StringToMessage("{SelectedAuraArrayIndex + 1} / {SortedAuraIndices.Length}"))

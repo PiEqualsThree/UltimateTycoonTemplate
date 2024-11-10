@@ -18,6 +18,7 @@ tycoon_manager<public> := class(creative_device, resetable):
     @editable       StartingPropsContainer : creative_prop = creative_prop{}
     @editable       SeasonPassBuilding : season_pass_building = season_pass_building{}
     @editable       PerksManager<public> : perks_manager = perks_manager{}
+    @editable       CosmeticsManager<public> : cosmetics_manager = cosmetics_manager{}
     @editable       VehicleManager<public> : vehicle_manager = vehicle_manager{}
     # @editable       SecretCollectiblesManager<public> : secret_collectibles_manager = secret_collectibles_manager{}
     @editable       TimeGiftBox : time_gift_box = time_gift_box{}
@@ -41,13 +42,12 @@ tycoon_manager<public> := class(creative_device, resetable):
     ButtonHeight : float = 25.0
 
     var TycoonBuildingIDMap<public> : [int]tycoon_building = map{}
-    var CosmeticsManager<public> : test_c = test_c{}
     var CurrencyManager<public> : currency_manager = currency_manager{}
     var PlayerManager<public> : player_manager = player_manager{}
     var MazeManager<public> : maze_manager = maze_manager{}
     var UIManager<public> : user_interface_manager = user_interface_manager{}
     <# Most op thing ever lol #>
-    #var MaybeGameManager<public> : ?game_manager = false
+    var MaybeGameManager<public> : ?game_manager = false
 
     var PlayerStatsManager<public> : player_stats_manager = player_stats_manager{}
     # var ScoreboardManager<public> : scoreboard_manager = scoreboard_manager{}
@@ -57,51 +57,49 @@ tycoon_manager<public> := class(creative_device, resetable):
     var OwnerPosition : vector3 = vector3{}
 
 
-    # UniqueBegin<public>(GameManager : game_manager)<suspends> : void =
-    #     set OriginalStartingPropsContainerTransform = StartingPropsContainer.GetTransform()
-    #     set OriginalClaimMutatorZoneTransform = ClaimMutatorZone.GetTransform()
-    #     if ( ClaimMutatorZone.TeleportTo[OriginalClaimMutatorZoneTransform.Translation - vector3{Z := 3000.0}, rotation{}]) {}
-    #     for ( BasicBuilding : Floor1TycoonBuildings, Building := tycoon_building[BasicBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building):
-    #         Building.UniqueBegin()
-    #         if ( Mod[Building.GetID(), 8] = 0) then Sleep(0.0)
-    #     for ( BasicBuilding : Floor2TycoonBuildings, Building := tycoon_building[BasicBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building):
-    #         Building.UniqueBegin()
-    #         if ( Mod[Building.GetID(), 8] = 0) then Sleep(0.0)
-    #     for ( BasicBuilding : Floor3TycoonBuildings, Building := tycoon_building[BasicBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building):
-    #         Building.UniqueBegin()
-    #         if ( Mod[Building.GetID(), 8] = 0) then Sleep(0.0)
-    #     for ( BasicBuilding : Floor4TycoonBuildings, Building := tycoon_building[BasicBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building):
-    #         Building.UniqueBegin()
-    #         if ( Mod[Building.GetID(), 8] = 0) then Sleep(0.0)
-    #     for ( BasicBuilding : Floor5TycoonBuildings, Building := tycoon_building[BasicBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building):
-    #         Building.UniqueBegin()
-    #         if ( Mod[Building.GetID(), 8] = 0) then Sleep(0.0)
-    #     for ( Hitbox : Hitboxes, Building := tycoon_building[Hitbox], set TycoonBuildingIDMap[Building.GetID()] = Building) do Building.UniqueBegin()
-    #     for ( Dropper : Droppers, Building := tycoon_building[Dropper], set TycoonBuildingIDMap[Building.GetID()] = Building) do {Building.UniqueBegin(); Sleep(0.0)}
-    #     if ( Building := tycoon_building[SeasonPassBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
-    #     if ( Building := tycoon_building[PhoneBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
-    #     if ( Building := tycoon_building[CurrencyCollector], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
-    #     if ( Building := tycoon_building[PumpkinCarvingStation], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
-    #     # if ( Building := tycoon_building[LaserDefenseBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
-    #     #VehicleManager.UniqueBegin(GameManager.CosmeticsManager)
-    #     PerksManager.UniqueBegin()
-    #     TimeGiftBox.UniqueBegin()
+    UniqueBegin<public>(GameManager : game_manager)<suspends> : void =
+        set OriginalStartingPropsContainerTransform = StartingPropsContainer.GetTransform()
+        set OriginalClaimMutatorZoneTransform = ClaimMutatorZone.GetTransform()
+        if ( ClaimMutatorZone.TeleportTo[OriginalClaimMutatorZoneTransform.Translation - vector3{Z := 3000.0}, rotation{}]) {}
+        for ( BasicBuilding : Floor1TycoonBuildings, Building := tycoon_building[BasicBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building):
+            Building.UniqueBegin()
+            if ( Mod[Building.GetID(), 8] = 0) then Sleep(0.0)
+        for ( BasicBuilding : Floor2TycoonBuildings, Building := tycoon_building[BasicBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building):
+            Building.UniqueBegin()
+            if ( Mod[Building.GetID(), 8] = 0) then Sleep(0.0)
+        for ( BasicBuilding : Floor3TycoonBuildings, Building := tycoon_building[BasicBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building):
+            Building.UniqueBegin()
+            if ( Mod[Building.GetID(), 8] = 0) then Sleep(0.0)
+        for ( BasicBuilding : Floor4TycoonBuildings, Building := tycoon_building[BasicBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building):
+            Building.UniqueBegin()
+            if ( Mod[Building.GetID(), 8] = 0) then Sleep(0.0)
+        for ( BasicBuilding : Floor5TycoonBuildings, Building := tycoon_building[BasicBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building):
+            Building.UniqueBegin()
+            if ( Mod[Building.GetID(), 8] = 0) then Sleep(0.0)
+        for ( Hitbox : Hitboxes, Building := tycoon_building[Hitbox], set TycoonBuildingIDMap[Building.GetID()] = Building) do Building.UniqueBegin()
+        for ( Dropper : Droppers, Building := tycoon_building[Dropper], set TycoonBuildingIDMap[Building.GetID()] = Building) do {Building.UniqueBegin(); Sleep(0.0)}
+        if ( Building := tycoon_building[SeasonPassBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
+        if ( Building := tycoon_building[PhoneBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
+        if ( Building := tycoon_building[CurrencyCollector], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
+        if ( Building := tycoon_building[PumpkinCarvingStation], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
+        # if ( Building := tycoon_building[LaserDefenseBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
+        VehicleManager.UniqueBegin(GameManager.CosmeticData)
+        PerksManager.UniqueBegin()
+        TimeGiftBox.UniqueBegin()
 
     # Init<public>(InCurrencyManager : currency_manager, InPlayerManager : player_manager, InPlayerStatsManager : player_stats_manager, InUIManager : user_interface_manager, InCosmeticsManager : cosmetics_manager, InMazeManager : maze_manager)<suspends> : void =
-    Init<public>(<#GameManager : game_manager#>)<suspends> : void =
-        # Print("Initing Tycoon manager")
-        # set PlayerStatsManager = GameManager.PlayerStatsManager
-        # #set CosmeticsManager = GameManager.CosmeticsManager
-        # set CurrencyManager = GameManager.CurrencyManager
-        # set PlayerManager = GameManager.PlayerManager
-        # set MazeManager = GameManager.MazeManager
-        # set UIManager = GameManager.UIManager
+    Init<public>(GameManager : game_manager)<suspends> : void =
+        Print("Initing Tycoon manager")
+        set PlayerStatsManager = GameManager.PlayerStatsManager
+        set CurrencyManager = GameManager.CurrencyManager
+        set PlayerManager = GameManager.PlayerManager
+        set MazeManager = GameManager.MazeManager
+        set UIManager = GameManager.UIManager
 
-        # set MaybeGameManager = option{GameManager}
-        # # set ScoreboardManager = InScoreboardManager
-        # # set CombatManager = InCombatManager
-        # VehicleManager.Init(Self)
-        # PerksManager.Init(Self)
+        set MaybeGameManager = option{GameManager}
+        # set ScoreboardManager = InScoreboardManager
+        VehicleManager.Init(Self)
+        PerksManager.Init(Self)
         
         
         for ( ID->Building : TycoonBuildingIDMap):
@@ -110,16 +108,16 @@ tycoon_manager<public> := class(creative_device, resetable):
         if:
             StartingPropsContainer.TeleportTo[OriginalStartingPropsContainerTransform.Translation - vector3{Z := 3000.0}, OriginalStartingPropsContainerTransform.Rotation]
             ClaimMutatorZone.TeleportTo[OriginalClaimMutatorZoneTransform]
-        # loop:
-        #     Agent := ClaimMutatorZone.AgentEntersEvent.Await()
-        #     if:
-        #         CustomPlayer := PlayerManager.GetCustomPlayerFromAgent[Agent]
-        #         not CustomPlayer.MaybeTycoonManager?
-        #     then:
-        #         StartTycoon(CustomPlayer, GameManager)
-        #         break
+        loop:
+            Agent := ClaimMutatorZone.AgentEntersEvent.Await()
+            if:
+                CustomPlayer := PlayerManager.GetCustomPlayerFromAgent[Agent]
+                not CustomPlayer.MaybeTycoonManager?
+            then:
+                StartTycoon(CustomPlayer, GameManager)
+                break
 
-    StartTycoon(Owner : custom_player<#, GameManager : game_manager#>)<suspends> : void =
+    StartTycoon(Owner : custom_player, GameManager : game_manager)<suspends> : void =
         Print("Starting TycooN!")
         PlayerStats := PlayerStatsManager.GetStats(Owner.Player)
         TycoonDevices.TeamSelector.ChangeTeam(Owner.Agent)
