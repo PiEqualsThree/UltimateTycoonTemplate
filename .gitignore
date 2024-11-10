@@ -1,0 +1,11 @@
+# Ignore everything
+*
+
+# Unignore .verse files
+!*.verse
+
+# Unignore .gitignore files
+!.gitignore
+
+# Unignore directories so that .verse files inside subdirectories are tracked
+!*/
