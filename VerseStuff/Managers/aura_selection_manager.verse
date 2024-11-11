@@ -17,8 +17,8 @@ aura_selection_manager<public> := class<concrete>:
     ResetEvent : event() = event(){}
 
     var MannequinAgent : ?agent = false
-    var SelectedAuraArrayIndex : int = 0
-    var CurrentAuraIndex : int = 0
+    var CurrentAuraArrayIndex : int = 0
+    var CurrentAuraID : int = -1
 
     UniqueBegin<public>() : void =
         {}
@@ -28,42 +28,60 @@ aura_selection_manager<public> := class<concrete>:
         Print("JFD;ak")
 
     LoadData<public>(Owner : custom_player, CosmeticsManager : cosmetics_manager) : void =
-        CosmeticsManager.UnlockAura(Owner, 0)
-        Billboard.ShowText()
-        NPCSpawner.Enable()
-        spawn{Update(Owner, CosmeticsManager)}
+        if ( CosmeticData := CosmeticsManager.MaybeCosmeticData?):
+            # for ( AuraID : PlayerStats.CosmeticStats.UnlockedAuraIDs) do UnlockAura(AuraID)
+            Billboard.ShowText()
+            NPCSpawner.Enable()
+            spawn{Update(Owner, CosmeticsManager, CosmeticData)}
+        else:
+            Print("Fatal Error [Aura Selection Manager] - Cosmetic Data not found!")
 
     Reset<public>() : void =
         NPCSpawner.DespawnAll(false)
         NPCSpawner.Disable()
         ResetEvent.Signal()
 
-    Update(Owner : custom_player, CosmeticsManager : cosmetics_manager)<suspends> : void =
+    Update(Owner : custom_player, CosmeticsManager : cosmetics_manager, CosmeticData : global_cosmetic_data)<suspends> : void =
         AssignMannequin()
-        Sleep(1.5)
+        Sleep(0.0)
+        if ( StarterAuraID := CosmeticsManager.SortedAuraIndices[0], AuraVFX := CosmeticData.AuraVFXPowerups[StarterAuraID]):
+            set CurrentAuraArrayIndex = 0
+            set CurrentAuraID = StarterAuraID
+            PreviewAura(CosmeticsManager, AuraVFX)
         race:
             ResetEvent.Await()
             loop: <# Cycle aura left #>
                 Agent := CycleLeftButton.InteractedWithEvent.Await()
                 if ( Owner.Agent = Agent):
-                    set SelectedAuraArrayIndex = Mod[SelectedAuraArrayIndex - 1, CosmeticsManager.SortedAuraIndices.Length] or SelectedAuraArrayIndex
-                    set CurrentAuraIndex = CosmeticsManager.SortedAuraIndices[SelectedAuraArrayIndex] or CurrentAuraIndex
-                    PreviewAura(CosmeticsManager, CurrentAuraIndex)
-            loop:<# Cycle aura right #>
+                    if:
+                        ArrayIndex := Mod[CurrentAuraArrayIndex - 1, CosmeticsManager.SortedAuraIndices.Length]
+                        AuraID := CosmeticsManager.SortedAuraIndices[ArrayIndex]
+                        AuraVFX := CosmeticData.AuraVFXPowerups[AuraID]
+                    then:
+                        set CurrentAuraArrayIndex = ArrayIndex
+                        set CurrentAuraID = AuraID
+                        PreviewAura(CosmeticsManager, AuraVFX)
+
+            loop: <# Cycle aura right #>
                 Agent := CycleRightButton.InteractedWithEvent.Await()
                 if ( Owner.Agent = Agent):
-                    set SelectedAuraArrayIndex = Mod[SelectedAuraArrayIndex + 1, CosmeticsManager.SortedAuraIndices.Length] or SelectedAuraArrayIndex
-                    set CurrentAuraIndex = CosmeticsManager.SortedAuraIndices[SelectedAuraArrayIndex] or CurrentAuraIndex
-                    PreviewAura(CosmeticsManager, CurrentAuraIndex)
+                    if:
+                        ArrayIndex := Mod[CurrentAuraArrayIndex + 1, CosmeticsManager.SortedAuraIndices.Length]
+                        AuraID := CosmeticsManager.SortedAuraIndices[ArrayIndex]
+                        AuraVFX := CosmeticData.AuraVFXPowerups[AuraID]
+                    then:
+                        set CurrentAuraArrayIndex = ArrayIndex
+                        set CurrentAuraID = AuraID
+                        PreviewAura(CosmeticsManager, AuraVFX)
+
             loop: <# Equip Button #>
                 Agent := SelectButton.InteractedWithEvent.Await()
                 if ( Owner.Agent = Agent):
-                    #CosmeticsManager.EquipAura(Owner, CurrentAuraIndex)
-                    PreviewAura(CosmeticsManager, CurrentAuraIndex)
+                    CosmeticsManager.EquipAura(Owner, CurrentAuraID)
                     
             loop:
-                PreviewAura(CosmeticsManager, CurrentAuraIndex)
-                Sleep(10.0)
+                if ( AuraVFX := CosmeticData.AuraVFXPowerups[CurrentAuraID]) then PreviewAura(CosmeticsManager, AuraVFX)
+                Sleep(13.0)
 
     AssignMannequin()<suspends> : void =
         race:
@@ -76,10 +94,9 @@ aura_selection_manager<public> := class<concrete>:
                 NPCSpawner.Spawn()
                 Sleep(5.0)
 
-    PreviewAura(CosmeticsManager : cosmetics_manager, AuraIndex : int) : void =
-        {}
-        # if ( Agent := MannequinAgent?, AuraVFX := CosmeticsManager.AuraVFXPowerups[AuraIndex]):
-        #     Billboard.SetText(StringToMessage("{SelectedAuraArrayIndex + 1} / {SortedAuraIndices.Length}"))
-        #     Billboard.UpdateDisplay()
-        #     AuraVFX.Pickup(Agent)
+    PreviewAura(CosmeticsManager : cosmetics_manager, VFXPowerup : visual_effect_powerup_device) : void =
+        if ( Agent := MannequinAgent?):
+            Billboard.SetText(StringToMessage("{CurrentAuraArrayIndex + 1} / {CosmeticsManager.SortedAuraIndices.Length}"))
+            Billboard.UpdateDisplay()
+            VFXPowerup.Pickup(Agent)
 

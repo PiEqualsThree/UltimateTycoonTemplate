@@ -106,7 +106,7 @@ global_boss_manager<public> := class(creative_device):
                         Widget.SetProgress(BossFortCharacter.GetHealth() / BossManager.GetMaxBossHealth())
                         Widget.SetHPText("{Ceil[BossFortCharacter.GetHealth()] or 1}/{Ceil[BossManager.GetMaxBossHealth()] or 1}")
 
-        <# Creative prop component potentially  or non npc bases bosses ??#>
+        <# non npc bases bosses ??#>
         else if ( 0 = 0):
             
         return boss_fight_end_result{WasDefeated := false, DefeatingFortCharacter := false}
@@ -183,8 +183,7 @@ boss_hp_widget<public> := class:
                                 Widget := HPTextBlock
                                 Padding := margin{Top := 3.0}
                 overlay_slot:
-                    Widget := texture_block{DefaultImage := BossFightUI.T_Boss_Fight_Health_Bar, DefaultDesiredSize := vector2{ X := 1024.0, Y := 128.0}}
-                
+                    Widget := texture_block{DefaultImage := BossFightUI.T_Boss_Fight_Health_Bar, DefaultDesiredSize := vector2{ X := 1024.0, Y := 128.0}}         
 
     GetCanvasSlot<public>() : canvas_slot =
         canvas_slot:

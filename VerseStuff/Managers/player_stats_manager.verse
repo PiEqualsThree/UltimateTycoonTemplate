@@ -66,14 +66,15 @@ tycoon_perk_stats<public> := class<final><persistable>:
     PerkLevelIDMap<public> : [int]int = map{}
 
 cosmetic_stats<public> := class<final><persistable>:
+    UnlockedAuraIDs : []int = array{0}
     UnlockedVehicleIDs : []int = array{}
-    UnlockedAuraIDs : []int = array{}
+    UnlockedVFXCosmeticIDs : []int = array{}
 
 pumpkin_carving_stats<public> := class<final><persistable>:
-    UnlockedMaterialIDs : []int = array{}
-    UnlockedTopIDs : []int = array{}
-    UnlockedEyeIDs : []int = array{}
-    UnlockedMouthIDs : []int = array{}
+    UnlockedMaterialIDs : []int = array{0,1,2,3}
+    UnlockedTopIDs : []int = array{0,1,2,3}
+    UnlockedEyeIDs : []int = array{0,1,2,3}
+    UnlockedMouthIDs : []int = array{0,1,2,3}
 
 
 

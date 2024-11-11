@@ -18,6 +18,7 @@ game_manager<public> := class(creative_device):
     @editable       CollabSettings<public> : collab_settings = collab_settings{}
     @editable       BossManager : global_boss_manager = global_boss_manager{}
     @editable       ZombieManager : global_zombie_manager = global_zombie_manager{}
+    @editable       CosmeticShop : global_cosmetic_shop = global_cosmetic_shop{}
     
     #ScoreboardManager : scoreboard_manager = scoreboard_manager{}
     CurrencyManager : currency_manager = currency_manager{}
@@ -30,9 +31,9 @@ game_manager<public> := class(creative_device):
         CurrencyManager.Init(UIManager)
         MazeManager.Init(CurrencyManager, UIManager)
         BossManager.Init(CurrencyManager, PlayerManager)
+        CosmeticShop.Init(PlayerManager, CurrencyManager)
      #   ScoreboardManager.Init(PlayerManager)
         ZombieManager.Init(PlayerManager, CurrencyManager, UIManager)
-        BossManager.Init(CurrencyManager, PlayerManager)
      #   VIPManager.Init(PlayerManager)
         for ( CustomPlayer : PlayerManager.GetCustomPlayers()) do spawn { PollInitNewPlayer(CustomPlayer)}
         for ( TycoonManager : TycoonManagers) do spawn{  BeginTycoonManager(TycoonManager) }
@@ -40,7 +41,6 @@ game_manager<public> := class(creative_device):
 
     BeginTycoonManager(TycoonManager : tycoon_manager)<suspends> : void =
         TycoonManager.UniqueBegin(Self)
-        # TycoonManager.Init(CurrencyManager, PlayerManager, PlayerStatsManager, UIManager, CosmeticsManager, MazeManager)
         TycoonManager.Init(Self)
 
     Update()<suspends> : void =
@@ -53,5 +53,6 @@ game_manager<public> := class(creative_device):
                 CustomPlayer := PlayerManager.CustomPlayerRemovedEvent.Await()
                 MazeManager.RemovePlayer(CustomPlayer)
                 MazeManager.RemovePlayerUI(CustomPlayer)
+                
     PollInitNewPlayer(CustomPlayer : custom_player)<suspends> : void =
         CustomPlayer.UniqueBegin(TycoonLevelSettings)

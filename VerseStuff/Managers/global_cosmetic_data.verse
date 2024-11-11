@@ -15,8 +15,7 @@ global_cosmetic_data<public> := class(creative_device):
     @editable       VFXCosmeticClearChannel : channel_device = channel_device{}
     @editable       AuraVFXPowerups : []visual_effect_powerup_device = array{}
     @editable       VFXCosmeticPowerups : []visual_effect_powerup_device = array{}
-    @editable       VehicleVFXPowerups : []visual_effect_powerup_device = array{}
-
+    @editable       VehicleCosmetics : []vehicle_cosmetic = array{}
         
 using { Cars}
 VehicleMeshes<public> : []mesh = array:
@@ -30,5 +29,9 @@ VehicleMeshes<public> : []mesh = array:
     Bugatti.SM_Vehicle_Bugatti
     Lamborghini.SM_Vehicle_Lamborghini
     
+vehicle_cosmetic<public> := class<concrete>:    
+    @editable       ID<public> : int = 0
+    @editable       Name<public> : string = ""
+    @editable       VFXPowerup<public> : visual_effect_powerup_device = visual_effect_powerup_device{}
 
-
+    GetMesh()<transacts> : mesh = VehicleMeshes[ID] or LancerEvo.SM_Vehicle_Lancer

@@ -49,6 +49,7 @@ red_spirit_boss_manager<public> := class<concrete>(boss_manager):
         set BossPlayerManager = GlobaBossManager.BossFightPlayerManager
 
     InitBossFight<override>(GlobalBossManager : global_boss_manager)<suspends> : void = 
+        Print("Starting red spirit boss fight!")
         set CurrentState = IdleState  
         sync:
             block:

@@ -100,12 +100,11 @@ pumpkin_carving_manager<public> := class<concrete>:
         Shop.Init()
 
     LoadData<public>(Owner : custom_player, TycoonManager : tycoon_manager, PlayerStats : player_stats)<suspends> : void =
-        <# Load save stuff here #>
-        for ( I := 0..3):
-            UnlockTop(I)
-            UnlockEyes(I)
-            UnlockMouth(I)
-            UnlockColor(I)
+        for ( ID : PlayerStats.PumpkinCarvingStats.UnlockedMaterialIDs) do UnlockColor(ID)
+        for ( ID : PlayerStats.PumpkinCarvingStats.UnlockedTopIDs) do UnlockTop(ID)
+        for ( ID : PlayerStats.PumpkinCarvingStats.UnlockedEyeIDs) do UnlockEyes(ID)
+        for ( ID : PlayerStats.PumpkinCarvingStats.UnlockedMouthIDs) do UnlockMouth(ID)
+        Sleep(0.0)
         for ( Device : CustomerCharacterDevices) do Device.Hide()
         Shop.LoadData(Owner, Self)
         spawn{Update(Owner)}
@@ -138,6 +137,7 @@ pumpkin_carving_manager<public> := class<concrete>:
 
     PollUIEvents(Owner : custom_player, MetricWeightSheet : [pumpkin_carving_metric]int)<suspends> : void =
         race:
+            ResetEvent.Await()
             PumpkinUI.FinishButton.OnClick().Await()
             AwaitAndResolvePageButtonPress(Owner, 0)
             AwaitAndResolvePageButtonPress(Owner, 1)
@@ -282,7 +282,26 @@ pumpkin_carving_manager<public> := class<concrete>:
             set UnlockedMouthIDs = UnlockedMouthIDs + array{ID}
             set UnlockedMouthIDs = SortBy(UnlockedMouthIDs, IntCompare)
 
-    Reset() : void =
+    GetStats()<transacts> : pumpkin_carving_stats =
+        pumpkin_carving_stats:
+            UnlockedMaterialIDs := UnlockedColorIDs
+            UnlockedTopIDs := UnlockedTopIDs
+            UnlockedEyeIDs := UnlockedEyeIDs
+            UnlockedMouthIDs := UnlockedMouthIDs
+    Reset<public>() : void =
+        set UnlockedColorIDs = array{}
+        set UnlockedTopIDs = array{}
+        set UnlockedEyeIDs = array{}
+        set UnlockedMouthIDs = array{}
+        set SelectedColorID = 0
+        set SelectedTopID = 0
+        set SelectedEyesID = 0
+        set SelectedMouthID = 0 
+        for ( Device : CustomerCharacterDevices) do Device.Hide()
+        for ( Decal : EyeDecals) do Decal.Hide()
+        for ( Decal : MouthDecals) do Decal.Hide()
+        PumpkinBase.Hide()
+        PumpkinTop.Hide()
         ResetEvent.Signal()
       
 pumpkin_carving_ui := class:
@@ -348,7 +367,7 @@ pumpkin_carving_ui := class:
         for ( I := UnlockedComponentIndices.Length..15, Widget := ComponentWidgets[I]) do Widget.Hide()
 
     Reset() : void =
-        {}
+        set CurrentComponentPageIndex = 0
 
     CreateUI() : widget = 
         TempButtons := array{ColorPageButton, TopPageButton, EyesPageButton, MouthPageButton}

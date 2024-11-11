@@ -75,6 +75,7 @@ tycoon_vehicle<public> := class<concrete><unique>(resetable):
         set IsUnlocked = Logic
 
     ResetEvent<override>() : event() = VehicleResetEvent
+    GetID<public>()<transacts> : int = ID
     GetName<public>()<transacts> : string = Name
     GetProp<public>()<transacts> : creative_prop = VehicleProp
     GetVFXPowerup<public>()<transacts><decides> : visual_effect_powerup_device = MaybeVFXPowerup?

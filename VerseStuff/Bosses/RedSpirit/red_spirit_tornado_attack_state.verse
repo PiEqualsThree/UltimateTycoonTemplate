@@ -24,12 +24,15 @@ using { NPCStuff}
 red_spirit_tornado_attack_state<public> := class(red_spirit_boss_state):
     var IsTornadoActive : logic = false
     var TornadosToSpawn : int = 2
+    var CooldownTime : float = 2.0
     var MaybeNextState : ?red_spirit_boss_state = false
 
     Init<override>(RedSpiritBossManager : red_spirit_boss_manager) : void =
         if ( not IsTornadoActive?, BossFortCharacter := RedSpiritBossManager.NPCBehavior.GetAgent[].GetFortCharacter[]):
+            Print("Tornado attack!")
             if ( AC := BossFortCharacter.GetPlayAnimationController[]) then AC.Play(BossFights.RedSpirit.Red_Spirit_Animation_Cast)
             set IsTornadoActive = true
+            set CooldownTime = 2.0
             set MaybeNextState = option{RedSpiritBossManager.IdleState}
             set TornadosToSpawn = BossFortCharacter.GetHealth() <= BossFortCharacter.GetMaxHealth() * 0.5 and 4 or 2
             var CurrentSpawnOffset: vector3 = 300.0 * BossFortCharacter.GetTransform().Rotation.GetLocalForward()
@@ -46,9 +49,10 @@ red_spirit_tornado_attack_state<public> := class(red_spirit_boss_state):
                         X := CurrentSpawnOffset.X * SpawnCos - CurrentSpawnOffset.Y * SpawnSin
                         Y := CurrentSpawnOffset.X * SpawnSin + CurrentSpawnOffset.Y * SpawnCos 
                         Z := 0.0
-
+        else:
+            set CooldownTime = 0.0
     Update<override>(RedSpiritBossManager : red_spirit_boss_manager)<suspends> : void =
-        Sleep(2.0)
+        Sleep(CooldownTime)
         End(RedSpiritBossManager)
 
     End<override>(RedSpiritBossManager : red_spirit_boss_manager) : void =

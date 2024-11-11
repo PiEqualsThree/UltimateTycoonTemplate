@@ -25,12 +25,16 @@ custom_player<public> := class<unique>:
     var<private> CurrencyMultiplier : float = 1.0
     var<private> MaybeTycoonManager : ?tycoon_manager = false
 
-    UniqueBegin<public>(TycoonLevelSettings : tycoon_level_settings) : void =
+    UniqueBegin<public>(TycoonLevelSettings : tycoon_level_settings)<suspends> : void =
         Print("Unique begin new custom player")
         if ( PlayerUI := GetPlayerUI[Player]) then PlayerUI.AddWidget(Canvas)
+        Sleep(0.0)
         TycoonLevel.UniqueBegin(TycoonLevelSettings)
+        Sleep(0.0)
         CurrencyWidgets.UniqueBegin()
+        Sleep(0.0)
         IncomeStreamWidgets.UniqueBegin(Self)
+        Sleep(0.0)
         Canvas.AddWidget(
             canvas_slot:
                 Widget := texture_block{DefaultImage := SocialsUI.MapCode, DefaultDesiredSize := vector2{X := 256.0, Y := 32.0}}

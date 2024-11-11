@@ -51,6 +51,7 @@ FormatFloat(Float : float, Decimals : int) : string =
         set DecimalStr += for ( I := Index + 1..Index + Decimals, NextDecimal := DecimalString[I]) do NextDecimal
     return DecimalStr
 
+StubMessage<localizes> : message = ""
 IdentityVector : vector3 = vector3{ X := 1.0, Y := 1.0, Z := 1.0}
 IntToMessage<localizes>(Number : int) : message = "{Number}"
 StringToMessage<localizes>(String : string) : message = "{String}"

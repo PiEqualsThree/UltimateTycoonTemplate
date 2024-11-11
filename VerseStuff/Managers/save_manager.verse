@@ -61,26 +61,26 @@ save_manager<public> := class:
         Sleep(0.0)
         TycoonManager.PerksManager.GetStats()
             
-    # TODO Rework cosmetic manager lol
-    GetCosmeticStats(Owner : custom_player)<suspends> : cosmetic_stats =
-        cosmetic_stats{}
-
+    GetCosmeticStats(TycoonManager : tycoon_manager)<suspends> : cosmetic_stats =
+        Sleep(0.0)
+        TycoonManager.CosmeticsManager.GetStats()
+            
     GetSeasonPassStats(TycoonManager : tycoon_manager)<suspends> : season_pass_stats = 
+        Sleep(0.0)
         TycoonManager.SeasonPassBuilding.TycoonSeasonPass.GetStats()
 
-    # TODO
-    GetPumpkinCarvingStats()<suspends> : pumpkin_carving_stats =
+    GetPumpkinCarvingStats(TycoonManager : tycoon_manager)<suspends> : pumpkin_carving_stats =
         Sleep(0.0)
-        pumpkin_carving_stats{}
+        TycoonManager.PumpkinCarvingStation.PumpkinCarvingManager.GetStats()
 
     GetPlayerStats(Owner : custom_player, TycoonManager : tycoon_manager)<suspends> : player_stats =
         LevelStats := GetLevelStats(Owner)
         CurrencyStats := GetCurrencyStats(Owner)
         PerkStats := GetPerkStats(TycoonManager)
-        CosmeticStats := GetCosmeticStats(Owner)
+        CosmeticStats := GetCosmeticStats(TycoonManager)
         BuildingStats := GetBuildingStats()
         SeasonPassStats := GetSeasonPassStats(TycoonManager)
-        PumpkinCarvingStats := GetPumpkinCarvingStats()
+        PumpkinCarvingStats := GetPumpkinCarvingStats(TycoonManager)
         player_stats:
             LevelStats := LevelStats
             CurrencyStats := CurrencyStats
@@ -90,5 +90,9 @@ save_manager<public> := class:
             SeasonPassStats := SeasonPassStats
             PumpkinCarvingStats := PumpkinCarvingStats
 
-    ValidatePlayerState<public>() : player_stats = 
+    IsBuildingPurchased(TycoonBuilding : tycoon_building)<transacts><decides> : void = PurchasedBuildingIDMap[TycoonBuilding.GetID()]
+    IsBuildingUnlocked(TycoonBuilding : tycoon_building)<transacts><decides> : void = UnlockedBuildingIDMap[TycoonBuilding.GetID()]
+    IsBuildingUpgraded(TycoonBuilding : tycoon_building)<transacts><decides> : void = UpgradableBuildingLevelMap[TycoonBuilding.GetID()]
+
+    ValidateSaveFile<public>(PlayerStats : player_stats) : player_stats = 
         player_stats{}

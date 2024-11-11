@@ -10,7 +10,7 @@ pumpkin_carving_station<public> := class<concrete>(tycoon_building, purchasable,
     @editable       ID : int = 0
     @editable       Price : int = 0
     @editable       PurchaseCurrencyType : currency_type = currency_type.Cash
-    @editable       PumpkinCarvingManager : pumpkin_carving_manager = pumpkin_carving_manager{}
+    @editable       PumpkinCarvingManager<public> : pumpkin_carving_manager = pumpkin_carving_manager{}
     @editable       ContainerProp : creative_prop = creative_prop{}
     @editable       PurchaseButton : creative_prop = creative_prop{}
     @editable       PassiveIncome : passive_income = passive_income{}
@@ -40,6 +40,7 @@ pumpkin_carving_station<public> := class<concrete>(tycoon_building, purchasable,
         
     Reset<override>() : void =
         set PurchaseStatus = purchase_status.Locked
+        PumpkinCarvingManager.Reset()
         ResetEvent().Signal()
         
     Unlock<override>(Owner : custom_player, ?PlayAnimations : logic = true) : void =

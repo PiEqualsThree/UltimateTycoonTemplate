@@ -17,9 +17,9 @@ tycoon_manager<public> := class(creative_device, resetable):
     @editable       ClaimMutatorZone : mutator_zone_device = mutator_zone_device{}
     @editable       StartingPropsContainer : creative_prop = creative_prop{}
     @editable       SeasonPassBuilding : season_pass_building = season_pass_building{}
+    @editable       VehicleSelectionBuilding : vehicle_selection_building = vehicle_selection_building{}
     @editable       PerksManager<public> : perks_manager = perks_manager{}
     @editable       CosmeticsManager<public> : cosmetics_manager = cosmetics_manager{}
-    @editable       VehicleManager<public> : vehicle_manager = vehicle_manager{}
     # @editable       SecretCollectiblesManager<public> : secret_collectibles_manager = secret_collectibles_manager{}
     @editable       TimeGiftBox : time_gift_box = time_gift_box{}
     @editable       CurrencyCollector : upgradable_currency_collector = upgradable_currency_collector{}
@@ -37,7 +37,7 @@ tycoon_manager<public> := class(creative_device, resetable):
     TycoonResetEvent : event() = event(){}
     TycoonBuildingPurchasedEvent<public> : event(tycoon_building_purchase_result) = event(tycoon_building_purchase_result){}
     TycoonBuildingUpgradedEvent<public> : event(tycoon_building_upgrade_result) = event(tycoon_building_upgrade_result){}
-    SaveManager : tycoon_save_manager = tycoon_save_manager{}
+    SaveManager : save_manager = save_manager{}
     ButtonRadius : float = 50.0
     ButtonHeight : float = 25.0
 
@@ -82,8 +82,8 @@ tycoon_manager<public> := class(creative_device, resetable):
         if ( Building := tycoon_building[PhoneBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
         if ( Building := tycoon_building[CurrencyCollector], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
         if ( Building := tycoon_building[PumpkinCarvingStation], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
-        # if ( Building := tycoon_building[LaserDefenseBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
-        VehicleManager.UniqueBegin(GameManager.CosmeticData)
+        if ( Building := tycoon_building[VehicleSelectionBuilding], set TycoonBuildingIDMap[Building.GetID()] = Building) then Building.UniqueBegin()
+        CosmeticsManager.UniqueBegin(GameManager.CosmeticData)
         PerksManager.UniqueBegin()
         TimeGiftBox.UniqueBegin()
 
@@ -98,9 +98,8 @@ tycoon_manager<public> := class(creative_device, resetable):
 
         set MaybeGameManager = option{GameManager}
         # set ScoreboardManager = InScoreboardManager
-        VehicleManager.Init(Self)
+        CosmeticsManager.Init(Self, GameManager.CosmeticData)
         PerksManager.Init(Self)
-        
         
         for ( ID->Building : TycoonBuildingIDMap):
             if ( Mod[ID, 5] = 0) then Sleep(0.0)
@@ -131,7 +130,7 @@ tycoon_manager<public> := class(creative_device, resetable):
         # SecretCollectiblesManager.Init(Owner)
         # ScoreboardManager.InitPlayer(Owner)
 
-        LoadData(Owner, PlayerStats) <# Load stuff #>
+        LoadData(Owner, GameManager, PlayerStats) <# Load stuff #>
         if ( Debug := DebugManager?) then Debug.Init(Owner, Self)
         if:
             StartingPropsContainer.TeleportTo[OriginalStartingPropsContainerTransform]
@@ -142,8 +141,7 @@ tycoon_manager<public> := class(creative_device, resetable):
     Update(Owner : custom_player)<suspends> : void =
         race:
             Sleep(Inf)
-
-                DoSaveLoop(Owner)
+            DoSaveLoop(Owner)
             loop: <# Rebirth when player rebirts lol #>
                 Agent := TycoonDevices.RebirthButton.InteractedWithEvent.Await()
                 if ( Owner.Agent = Agent):
@@ -161,15 +159,15 @@ tycoon_manager<public> := class(creative_device, resetable):
         loop:
             Sleep(1.0)
             set Time = Time - 1
-            TycoonDevices.SaveTimerHudDevice.SetText(StringToMessage("{FormatSecondsToMinutes(Time)}"))
-            TycoonDevices.SaveTimerHudDevice.Show(Owner.Player)
+            UIManager.SaveTimerHudDevice.SetText(StringToMessage("{FormatSecondsToMinutes(Time)}"))
+            UIManager.SaveTimerHudDevice.Show(Owner.Player)
             if ( Time <= 0):
                 SaveData(Owner)
                 Sleep(3.0)
                 set Time = 60 * 20
 
     (Purchasable : purchasable).AwaitPurchase(Owner : custom_player)<suspends> : void =
-        Sleep(1.25)
+        Sleep(1.2)
         var PurchaseButtonPosition : vector3 = Purchasable.GetPurchaseButton().GetTransform().Translation
         race:
             ResetEvent().Await()             
@@ -341,28 +339,17 @@ tycoon_manager<public> := class(creative_device, resetable):
 
     SaveData(Owner : custom_player)<suspends> : void =
         Print("Saving stats!")
-    #     BattlePassStats := SaveManager.GetBattlePassStats(BattlePassBuilding.TycoonBattlePass)
-    #     TycoonDevices.SaveInProgressHudDevice.Show(Owner.Player)
-        
-    #     Stats := player_stats:
-    #         Cash := Owner.Cash
-    #         Candy := Owner.Candy
-    #         BlingBucks := Owner.BlingBucks
-    #         Rebirths := Owner.Rebirths
-    #         CurrencyCollectorStoredCash := CurrencyCollector.StoredCash
-    #         LevelStats := SaveManager.GetLevelStats(Owner)
-    #         CosmeticStats := SaveManager.GetCosmeticStats(VehicleManager)
-    #         BuildingStats := SaveManager.GetBuildingStats()
-    #         BattlePassStats := BattlePassStats
-    #     sync:
-    #         DidSaveStats := PlayerStatsManager.SaveTycoonStats(Owner, Stats)
-    #         Sleep(2.0)
-    #     TycoonDevices.SaveCompleteHudDevice.Show(Owner.Player)
-    #     #Print("Data saved successfully!")
+        UIManager.SaveInProgressHudDevice.Show(Owner.Player)
+        Stats := SaveManager.GetPlayerStats(Owner, Self)
+        sync:
+            Sleep(1.0)
+            PlayerStatsManager.SaveTycoonStats(Owner, Stats)
+        UIManager.SaveInProgressHudDevice.Hide(Owner.Player)
+        UIManager.SaveCompleteHudDevice.Show(Owner.Agent, StubMessage, ?DisplayTime := 3.0)
             
-    LoadData(Owner : custom_player, PlayerStats : player_stats)<suspends> : void =
+    LoadData(Owner : custom_player, GameManager : game_manager, PlayerStats : player_stats)<suspends> : void =
         PerksManager.LoadData(Owner, Self, PlayerStats)
-        VehicleManager.LoadData(Owner, Self, PlayerStats)
+        CosmeticsManager.LoadData(Owner, GameManager.CosmeticData, PlayerStats)
         # Load unlocked buildings
         UnlockedBuildingIDs := PlayerStats.BuildingStats.UnlockedBuildingIDs
         for ( UnlockedBuildingID : UnlockedBuildingIDs, TycoonBuilding := TycoonBuildingIDMap[UnlockedBuildingID], not SaveManager.IsBuildingUnlocked[TycoonBuilding]):
@@ -435,28 +422,28 @@ tycoon_manager<public> := class(creative_device, resetable):
     Reset<override>() : void = {}
     ResetEvent<override>() : event() = TycoonResetEvent
 
-tycoon_save_manager := class:
-    var PurchasedBuildingIDMap : [int]logic = map{}
-    var UnlockedBuildingIDMap : [int]logic = map{}
-    var PurchasedBuildingIDs : []int = array{}
-    var UnlockedBuildingIDs : []int = array{}
-    var UpgradableBuildingLevelMap : [int]int = map{}
+# tycoon_save_manager := class:
+#     var PurchasedBuildingIDMap : [int]logic = map{}
+#     var UnlockedBuildingIDMap : [int]logic = map{}
+#     var PurchasedBuildingIDs : []int = array{}
+#     var UnlockedBuildingIDs : []int = array{}
+#     var UpgradableBuildingLevelMap : [int]int = map{}
     
-    AddPurchasedBuilding(PurchasedTycoonBuilding : tycoon_building) : void =
-        ID := PurchasedTycoonBuilding.GetID()
-        if ( not PurchasedBuildingIDMap[ID], set PurchasedBuildingIDMap[ID] = true):
-            set PurchasedBuildingIDs = PurchasedBuildingIDs + array{ PurchasedTycoonBuilding.GetID() }
+#     AddPurchasedBuilding(PurchasedTycoonBuilding : tycoon_building) : void =
+#         ID := PurchasedTycoonBuilding.GetID()
+#         if ( not PurchasedBuildingIDMap[ID], set PurchasedBuildingIDMap[ID] = true):
+#             set PurchasedBuildingIDs = PurchasedBuildingIDs + array{ PurchasedTycoonBuilding.GetID() }
 
-    AddUnlockedBuilding(UnlockedTycoonBuilding : tycoon_building) : void =
-        ID := UnlockedTycoonBuilding.GetID()
-        if ( not UnlockedBuildingIDMap[ID], set UnlockedBuildingIDMap[ID] = true):
-            set UnlockedBuildingIDs = UnlockedBuildingIDs + array{ ID }
+#     AddUnlockedBuilding(UnlockedTycoonBuilding : tycoon_building) : void =
+#         ID := UnlockedTycoonBuilding.GetID()
+#         if ( not UnlockedBuildingIDMap[ID], set UnlockedBuildingIDMap[ID] = true):
+#             set UnlockedBuildingIDs = UnlockedBuildingIDs + array{ ID }
 
-    AddUpgradableBuilding(UpgradedTycoonBuilding : tycoon_building, NewLevel : int) : void =
-        if ( set UpgradableBuildingLevelMap[UpgradedTycoonBuilding.GetID()] = NewLevel) {}
+#     AddUpgradableBuilding(UpgradedTycoonBuilding : tycoon_building, NewLevel : int) : void =
+#         if ( set UpgradableBuildingLevelMap[UpgradedTycoonBuilding.GetID()] = NewLevel) {}
 
-    RemoveUnlockedBuilding(TycoonBuilding : tycoon_building) : void =
-        set UnlockedBuildingIDs = for ( ID : UnlockedBuildingIDs, TycoonBuilding.GetID() <> ID) do ID
+#     RemoveUnlockedBuilding(TycoonBuilding : tycoon_building) : void =
+#         set UnlockedBuildingIDs = for ( ID : UnlockedBuildingIDs, TycoonBuilding.GetID() <> ID) do ID
 
 
     # GetCosmeticStats(VehicleManager : vehicle_manager) : cosmetic_stats = 
@@ -492,9 +479,9 @@ tycoon_save_manager := class:
     #         FreeRewardsClaimStatusMap := FreeRewardsClaimStatusMap
     #         PremiumRewardsClaimStatusMap := PremiumRewardsClaimStatusMap
 
-    IsBuildingPurchased(TycoonBuilding : tycoon_building)<transacts><decides> : void = PurchasedBuildingIDMap[TycoonBuilding.GetID()]
-    IsBuildingUnlocked(TycoonBuilding : tycoon_building)<transacts><decides> : void = UnlockedBuildingIDMap[TycoonBuilding.GetID()]
-    IsBuildingUpgraded(TycoonBuilding : tycoon_building)<transacts><decides> : void = UpgradableBuildingLevelMap[TycoonBuilding.GetID()]
+    # IsBuildingPurchased(TycoonBuilding : tycoon_building)<transacts><decides> : void = PurchasedBuildingIDMap[TycoonBuilding.GetID()]
+    # IsBuildingUnlocked(TycoonBuilding : tycoon_building)<transacts><decides> : void = UnlockedBuildingIDMap[TycoonBuilding.GetID()]
+    # IsBuildingUpgraded(TycoonBuilding : tycoon_building)<transacts><decides> : void = UpgradableBuildingLevelMap[TycoonBuilding.GetID()]
     
 tycoon_building_purchase_result<public> := struct:
     TycoonBuildingID<public> : int
@@ -516,10 +503,7 @@ tycoon_devices := class<concrete>:
     @editable       PurchaseFailAudio : audio_player_device = audio_player_device{}
     @editable       PurchaseFeedbackHud : hud_message_device = hud_message_device{}
     @editable       ItemRemover : item_remover_device = item_remover_device{}
-    @editable       UIRemoveTrigger : trigger_device = trigger_device{}
-    @editable       SaveTimerHudDevice : hud_message_device = hud_message_device{}
-    @editable       SaveInProgressHudDevice : hud_message_device = hud_message_device{}
-    @editable       SaveCompleteHudDevice : hud_message_device = hud_message_device{}
+    @editable       UIRemoveTrigger : trigger_device = trigger_device{}    
     
 debug := class<concrete>:
     @editable       SaveButton : button_device = button_device{}

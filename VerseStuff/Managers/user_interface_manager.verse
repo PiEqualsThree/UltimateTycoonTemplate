@@ -17,7 +17,9 @@ using { UIStuff.CurrencyUI }
 using { UIStuff.CosmeticsUI }
 
 user_interface_manager<public> := class<concrete>:
-
+    @editable       SaveTimerHudDevice : hud_message_device = hud_message_device{}
+    @editable       SaveInProgressHudDevice : hud_message_device = hud_message_device{}
+    @editable       SaveCompleteHudDevice : hud_message_device = hud_message_device{}     
 
     Init<public>(PlayerManager : player_manager) : void =
         spawn{ Update(PlayerManager)}

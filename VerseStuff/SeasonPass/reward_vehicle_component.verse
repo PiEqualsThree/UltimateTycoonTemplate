@@ -20,7 +20,7 @@ reward_vehicle_component := class<concrete>(reward_component):
     Init<override>() : void = {}
     
     Claim<override>(Owner : custom_player, TycoonManager : tycoon_manager, Pass : season_pass) : void =
-        TycoonManager.VehicleManager.UnlockVehicle(Owner, VehicleID, ?PlayAnimations := false)
+        TycoonManager.CosmeticsManager.VehicleManager.UnlockVehicle(Owner, VehicleID)
 
     Reset<override>() : void =
         ResetEvent().Signal()

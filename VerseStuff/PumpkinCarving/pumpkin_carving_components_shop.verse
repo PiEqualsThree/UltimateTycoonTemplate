@@ -215,7 +215,7 @@ pumpkin_carving_components_shop<public> := class<concrete>:
 
     UpdateEyesComponent(PumpkinManager : pumpkin_carving_manager, ComponentIndex : int) : void =
         PumpkinTopProp.Hide()
-        PumpkinBaseProp.Hide()
+        PumpkinBaseProp.Show()
         if ( EyeDecal := CurrentEyeDecal?) then EyeDecal.Hide()
         if ( MouthDecal := CurrentMouthDecal?) then MouthDecal.Hide()
         if ( Decal := PumpkinManager.EyeDecals[ComponentIndex], Decal.TeleportTo[PumpkinBaseProp.GetTransform()]):
@@ -226,7 +226,7 @@ pumpkin_carving_components_shop<public> := class<concrete>:
             
     UpdateMouthComponent(PumpkinManager : pumpkin_carving_manager, ComponentIndex : int) : void =
         PumpkinTopProp.Hide()
-        PumpkinBaseProp.Hide()
+        PumpkinBaseProp.Show()
         if ( EyeDecal := CurrentEyeDecal?) then EyeDecal.Hide()
         if ( MouthDecal := CurrentMouthDecal?) then MouthDecal.Hide()
         if ( Decal := PumpkinManager.MouthDecals[ComponentIndex], Decal.TeleportTo[PumpkinBaseProp.GetTransform()]):

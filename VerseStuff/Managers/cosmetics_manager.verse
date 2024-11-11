@@ -11,7 +11,7 @@ using { /UnrealEngine.com/Temporary }
 using { Cosmetics }
 
 cosmetics_manager<public> := class<concrete>:  
-    @editable       AuraSelectionManager : aura_selection_manager = aura_selection_manager{}
+    @editable       VehicleManager<public> : vehicle_manager = vehicle_manager{}
 
     ResetEvent : event() = event(){}
 
@@ -27,14 +27,19 @@ cosmetics_manager<public> := class<concrete>:
 
     UniqueBegin(CosmeticData : global_cosmetic_data) : void =
         set MaybeCosmeticData = option{CosmeticData}
-        AuraSelectionManager.UniqueBegin()
+        VehicleManager.UniqueBegin(CosmeticData)
+        
 
-    Init(TycoonManager : tycoon_manager) : void =
-        AuraSelectionManager.Init()
+    Init(TycoonManager : tycoon_manager, CosmeticData : global_cosmetic_data) : void =
+        VehicleManager.Init(TycoonManager, CosmeticData)
 
-    LoadData(Owner : custom_player, PlayerStats : player_stats)<suspends> : void =
-        AuraSelectionManager.LoadData(Owner, Self)
-
+    LoadData(Owner : custom_player, CosmeticData : global_cosmetic_data, PlayerStats : player_stats)<suspends> : void =
+        for ( ID : PlayerStats.CosmeticStats.UnlockedAuraIDs) do UnlockAura(Owner, ID)
+        for ( ID : PlayerStats.CosmeticStats.UnlockedVFXCosmeticIDs) do UnlockVFXCosmetic(Owner, ID)
+        set SelectedAuraIndex = SortedAuraIndices[0] or -1
+        set SelectedVFXCosmeticIndex = SortedVFXCosmeticIndices[0] or -1
+        VehicleManager.LoadData(Owner, CosmeticData, PlayerStats)
+        
     Update(Owner : custom_player)<suspends> : void =
         race:
             ResetEvent.Await()
@@ -75,7 +80,7 @@ cosmetics_manager<public> := class<concrete>:
             Print("Error: No cosmetic data set for cosmetic manager!")
 
     UnlockAura<public>(Owner : custom_player, AuraIndex : int) : void =
-        if ( UnlockedAuraIndexMap[AuraIndex] = true):
+        if ( not UnlockedAuraIndexMap[AuraIndex]?, set UnlockedAuraIndexMap[AuraIndex] = true):
             set SortedAuraIndices = SortIndicesMap(UnlockedAuraIndexMap)
 
     UnlockVFXCosmetic<public>(Owner : custom_player, VFXCosmeticIndex : int) : void =
@@ -107,11 +112,13 @@ cosmetics_manager<public> := class<concrete>:
 
     GetStats() : cosmetic_stats = 
         cosmetic_stats:
-
+            UnlockedAuraIDs := SortedAuraIndices
+            UnlockedVehicleIDs := VehicleManager.UnlockedVehicleIDs
+            UnlockedVFXCosmeticIDs := SortedVFXCosmeticIndices
 
     Reset() : void =
         ResetEvent.Signal()
-        AuraSelectionManager.Reset()
+        VehicleManager.Reset()
         set UnlockedAuraIndexMap = map{}
         set SortedAuraIndices = array{}
         set SelectedAuraIndex = -1
