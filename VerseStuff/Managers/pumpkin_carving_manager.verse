@@ -42,6 +42,7 @@ pumpkin_carving_manager<public> := class<concrete>:
     ResetEvent : event() = event(){}
     PumpkinCarvingBeginEvent : event() = event(){}
     PumpkinCarvingEndEvent : event() = event(){}
+    ScoreWidget : pumpkin_carving_score_widget = pumpkin_carving_score_widget{}
     
     var EyeDecals<public> : []creative_prop = array{}
     var MouthDecals<public> : []creative_prop = array{}
@@ -74,6 +75,7 @@ pumpkin_carving_manager<public> := class<concrete>:
     UniqueBegin<public>()<suspends> : void =
         Shop.UniqueBegin()
         PumpkinUI.UniqueBegin()
+        ScoreWidget.UniqueBegin()
         
         XForm := transform:
             Translation := PumpkinBase.GetTransform().Translation + vector3{Z := 25.0}
@@ -217,7 +219,7 @@ pumpkin_carving_manager<public> := class<concrete>:
     
     UpdateColorComponent(ComponentIndex : int) : void =
         set SelectedColorID = ComponentIndex
-        if ( Material := PumpkinMaterials[ComponentIndex]):
+        if ( Material := PumpkinMaterialComponents[ComponentIndex]):
             PumpkinBase.SetMaterial(Material)
 
     UpdateTopComponent(ComponentIndex : int) : void =
@@ -345,7 +347,7 @@ pumpkin_carving_ui := class:
         case(PageIndex):
             0 => 
                 set UnlockedComponentIndices = PumpkinCarvingManager.UnlockedColorIDs
-                set ImagesArray = PumpkinColorComponentImages
+                set ImagesArray = PumpkinMaterialComponentImages
                 PageTextureBlock.SetImage(T_Pumpkin_Carving_Page_Text_Color)
             1 =>
                 set UnlockedComponentIndices = PumpkinCarvingManager.UnlockedTopIDs
@@ -492,28 +494,42 @@ PumpkinTopMeshes<public> : []mesh = array:
     SM_Pumpkin_Top_TV
     SM_Pumpkin_Top_Toilet
 
-PumpkinMaterials<public> : []material = array:
+PumpkinMaterialComponents<public> : []material = array:
     MI_Pumpkin_Basic_Orange
     MI_Pumpkin_Basic_Black
     MI_Pumpkin_Basic_White
+    MI_Pumpkin_Material_Noise_Red
+    MI_Pumpkin_Material_Iridescent_Orange
+    M_Pumpkin_Material_Iridescent_Green
+    MI_Pumpkin_Material_Iridescent_Blue
+    MI_Pumpkin_Material_Gold
+    M_Pumpkin_Material_Ice
+    MI_Pumpkin_Material_Frost
+    MI_Pumpkin_Material_Cyborg
+    M_Pumpkin_Material_Gas
+    MI_Pumpkin_Material_Galaxy
+    MI_Pumpkin_Material_Gas_Pink
+    M_Pumpkin_RGB
+    M_Pumpkin_Material_Crystal
 
-PumpkinColorComponentImages<public> : []texture = array:
-    T_Place_Holder
-    T_Place_Holder
-    T_Place_Holder
-    T_Place_Holder
-    T_Place_Holder
-    T_Place_Holder
-    T_Place_Holder
-    T_Place_Holder
-    T_Place_Holder
-    T_Place_Holder
-    T_Place_Holder
-    T_Place_Holder
-    T_Place_Holder
-    T_Place_Holder
-    T_Place_Holder
-    T_Place_Holder
+using { UIStuff.PumpkinCarvingUI.PumpkinMaterials }
+PumpkinMaterialComponentImages<public> : []texture = array:
+    T_Pumpkin_Material_Orange
+    T_Pumpkin_Material_White
+    T_Pumpkin_Material_Black
+    T_Pumpkin_Material_Noise_Red
+    T_Pumpkin_Material_Iridescent_Orange
+    T_Pumpkin_Material_Iridescent_Green
+    T_Pumpkin_Material_Iridescent_Purple
+    T_Pumpkin_Material_Gold
+    T_Pumpkin_Material_Ice
+    T_Pumpkin_Material_Frost
+    T_Pumpkin_Material_Cyborg_Red
+    T_Pumpkin_Material_Gas
+    T_Pumpkin_Material_Galaxy
+    T_Pumpkin_Material_Gas_Pink
+    T_Pumpkin_Material_RGB
+    T_Pumpkin_Material_Cubes
 
 using { UIStuff.PumpkinCarvingUI.PumpkinTops}
 PumpkinTopComponentImages<public> : []texture = array:

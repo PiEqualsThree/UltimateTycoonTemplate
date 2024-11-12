@@ -286,9 +286,9 @@ active_perk_widget := class:
 PerkIcons : []texture = array:
     T_Perk_Icon_Refund
     T_Perk_Icon_Cashback
-    T_Perk_Icon_Extra_XP
+    T_Perk_Icon_Supercharged
 
 PerkSelectionImages : []texture = array:
     T_Perk_Overlay_Refund
     T_Perk_Overlay_Cashback
-    T_Perk_Overlay_Extra_XP
+    T_Perk_Overlay_Supercharged

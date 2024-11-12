@@ -82,50 +82,93 @@ reward_tier<public> := enum:
 using { UIStuff.SeasonPassUI}
 # using { SeasonPassUI.FreeRewards}
 # using { SeasonPassUI.PremiumRewards}
-
+using { UIStuff.SeasonPassUI.FreeRewards}
+using { UIStuff.SeasonPassUI.PremiumRewards}
+using { UIStuff.PerksUI }
 FreeRewardImages<public> : []texture = array:
-#     T_Free_Reward_1
-#     T_Free_Reward_2
-#     T_Free_Reward_3
-#     T_Free_Reward_4
-#     T_Free_Reward_5
-#     T_Free_Reward_6
-#     T_Free_Reward_7
-#     T_Free_Reward_8
-#     T_Free_Reward_9
-#     T_Free_Reward_10
-#     T_Free_Reward_11
-#     T_Free_Reward_12
-#     T_Free_Reward_13
-#     T_Free_Reward_14
-#     T_Free_Reward_15
-#     T_Free_Reward_16
-#     T_Free_Reward_17
-#     T_Free_Reward_18
-#     T_Free_Reward_19
-#     T_Free_Reward_20
+    <# 0#>T_Perk_Icon_Refund
+    <# 1#>T_Bling_Bucks
+    <# 2#>T_Bling_Bucks
+    <# 3#>T_Warforged_AR
+    <# 4#>T_Cosmetic_Pirate_Hat
+    <# 5#>T_Perk_Icon_Refund
+    <# 6#>T_Bling_Bucks
+    <# 7#>T_Reward_Default <# Aura #>
+    <# 8#>T_Bling_Bucks
+    <# 9#>T_Shockwave_Grenades
+    <#10#>T_Bling_Bucks
+    <#11#>T_Perk_Icon_Refund
+    <#12#>T_Reward_Default <# TODO: Aura #>
+    <#13#>T_Bling_Bucks 
+    <#14#>T_Shockwave_Grenades 
+    <#15#>T_Bling_Bucks
+    <#16#>T_Perk_Icon_Refund
+    <#17#>T_Reward_Default <# TODO: Aura #>
+    <#18#>T_Bling_Bucks 
+    <#19#>T_Dual_Micro_SMG 
+    <#20#>T_Perk_Icon_Refund 
+    <#21#>T_Cosmetic_Panda_Mask
+    <#22#>T_Bling_Bucks
+    <#23#>T_Reward_Default <# TODO: Aura #>
+    <#24#>T_Perk_Icon_Refund 
+    <#25#>T_Bling_Bucks
+    <#26#>T_Shockwave_Bow
+    <#27#>T_Bling_Bucks
+    <#28#>T_Bling_Bucks
+    <#29#>T_Perk_Icon_Refund
+    <#30#>T_Reward_Default <# TODO: Aura #>
+    <#31#>T_Bling_Bucks
+    <#32#>T_Jetpack
+    <#33#>T_Bling_Bucks
+    <#34#>T_Bling_Bucks
+    <#35#>T_Perk_Icon_Refund
+    <#36#>T_Bling_Bucks
+    <#37#>T_Grapple_Glove
+    <#38#>T_Perk_Icon_Refund
+    <#39#>T_Reward_Default <# TODO : Aura #>
+
 
 PremiumRewardImages<public> : []texture = array:
-#     T_Premium_Reward_1
-#     T_Premium_Reward_2
-#     T_Premium_Reward_3
-#     T_Premium_Reward_4
-#     T_Premium_Reward_5
-#     T_Premium_Reward_6
-#     T_Premium_Reward_7
-#     T_Premium_Reward_8
-#     T_Premium_Reward_9
-#     T_Premium_Reward_10
-#     T_Premium_Reward_11
-#     T_Premium_Reward_12
-#     T_Premium_Reward_13
-#     T_Premium_Reward_14
-#     T_Premium_Reward_15
-#     T_Premium_Reward_16
-#     T_Premium_Reward_17
-#     T_Premium_Reward_18
-#     T_Premium_Reward_19
-#     T_Premium_Reward_20
+    <# 0#>T_Perk_Icon_Supercharged
+    <# 1#>T_Grappler
+    <# 2#>T_Reward_Default <# Aura #>
+    <# 3#>T_Perk_Icon_Supercharged
+    <# 4#>T_Cybertruck
+    <# 5#>T_Reward_Default <# TODO: Aura #>
+    <# 6#>T_Witch_Broom
+    <# 7#>T_Perk_Icon_Supercharged
+    <# 8#>T_Reward_Default <# TODO: Aura #>
+    <# 9#>T_Pumpkin_Launcher
+    <#10#>T_Corvette
+    <#11#>T_Perk_Icon_Supercharged
+    <#12#>T_Cosmetic_Llama_Mask
+    <#13#>T_Reward_Default <# TODO: Aura #>
+    <#14#>T_Nitro_Fists
+    <#15#>T_Perk_Icon_Supercharged
+    <#16#>T_Reward_Default <# TODO: Aura #>
+    <#17#>T_Cosmetic_Chicken_Mask
+    <#18#>T_Porsche
+    <#19#>T_Reward_Default <# TODO: Aura #>
+    <#20#>T_Perk_Icon_Supercharged
+    <#21#>T_Kinetic_Blade
+    <#22#>T_Reward_Default <# TODO: Aura #>
+    <#23#>T_Cosmetic_Witch_Hat
+    <#24#>T_Reward_Default <# TODO: Aura #>
+    <#25#>T_Perk_Icon_Supercharged  
+    <#26#>T_Reward_Default <# TODO: Aura #>
+    <#27#>T_Icarus_Wings
+    <#28#>T_Perk_Icon_Supercharged
+    <#29#>T_Reward_Default <# TODO: Aura #>
+    <#30#>T_Bugatti
+    <#31#>T_Cosmetic_Rabbit
+    <#32#>T_Reward_Default <# TODO: Aura #>
+    <#33#>T_Perk_Icon_Supercharged
+    <#34#>T_Reward_Default <# TODO: Aura #>
+    <#35#>T_Cosmetic_Pumpkin
+    <#36#>T_Perk_Icon_Supercharged
+    <#37#>T_Chainsaw
+    <#38#>T_Reward_Default <# TODO: Aura #>
+    <#39#>T_Lamborghini
 
 
 

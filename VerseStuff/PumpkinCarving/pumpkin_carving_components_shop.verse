@@ -197,7 +197,7 @@ pumpkin_carving_components_shop<public> := class<concrete>:
         set AvailableMouthIDs = NewArray
 
     UpdateColorComponent(PumpkinManager : pumpkin_carving_manager, ComponentIndex : int) : void =
-        if ( Material := PumpkinMaterials[ComponentIndex]):
+        if ( Material := PumpkinMaterialComponents[ComponentIndex]):
             PumpkinTopProp.Hide()
             PumpkinBaseProp.Show()
             PumpkinBaseProp.SetMaterial(Material)
@@ -289,7 +289,7 @@ pumpkin_carving_shop_ui := class:
         case(PageIndex):
             0 => 
                 set UnlockedComponentIndices = PumpkinCarvingShopManager.AvailableMaterialIDs
-                set ImagesArray = PumpkinColorComponentImages
+                set ImagesArray = PumpkinMaterialComponentImages
                 PageTextureBlock.SetImage(T_Pumpkin_Carving_Page_Text_Color)
             1 =>
                 set UnlockedComponentIndices = PumpkinCarvingShopManager.AvailableTopIDs

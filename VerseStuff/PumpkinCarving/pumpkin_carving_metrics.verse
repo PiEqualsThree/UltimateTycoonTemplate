@@ -79,7 +79,10 @@ PopulateWeights(CurrentWeightSheet : [pumpkin_carving_metric]int, Metrics : []pu
     return PopulateWeights(NewWeightMap, Metrics, CurrentWeightTotal)
     
             
-
+pumpkin_carving_score_result<public> := struct:
+    Score : int
+    CashGain : int
+    CandyGain: int
                 
 
 

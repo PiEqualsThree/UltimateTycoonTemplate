@@ -42,12 +42,18 @@ vehicle_selection_manager<public> := class<concrete>:
         if ( GlobalCosmeticData := VehicleManager.MaybeCosmeticData?):
             EquipButton.Enable()
             if ( VehiclePreviewProp.TeleportTo[DefaultPreviewVehiclePropTransform]) then VehiclePreviewProp.Show()
-            if ( StarterVehicleID := VehicleManager.UnlockedVehicleIDs[0], Vehicle := GlobalCosmeticData.VehicleCosmetics[StarterVehicleID]) then UpdatePreview(Vehicle)
+            if ( StarterVehicleID := VehicleManager.UnlockedVehicleIDs[0], Vehicle := GlobalCosmeticData.VehicleCosmetics[StarterVehicleID]):
+                set CurrentVehicleArrayIndex = 0
+                set CurrentVehicleID = StarterVehicleID
+                UpdatePreview(Vehicle)
+            else:
+                VehiclePreviewProp.SetMesh(ReturnVehicleMesh? or Cars.LancerEvo.SM_Vehicle_Lancer)
             spawn{ Update(Owner, VehicleManager, GlobalCosmeticData)}
         else:
             Print("Fatal Error: Vehicle Selection Manager cannot load data (Missing global cosmetic data)")
 
     Update(Owner : custom_player, VehicleManager : vehicle_manager, GlobalCosmeticData : global_cosmetic_data)<suspends> : void =
+        Sleep(0.25)
         race:
             ResetEvent.Await()
             loop: <# Equip event #>
@@ -77,8 +83,9 @@ vehicle_selection_manager<public> := class<concrete>:
                 then:
                     set CurrentVehicleID = VehicleID
                     UpdatePreview(VehicleCosmetic)
-            loop:
-                VehiclePreviewProp.MoveTo(DefaultPreviewVehiclePropTransform.Translation, DefaultPreviewVehiclePropTransform.Rotation.ApplyYaw(2.0 * PiFloat), 5.0)
+
+            loop: <# Rotate vehicle lol #>
+                VehiclePreviewProp.MoveTo(DefaultPreviewVehiclePropTransform.Translation, VehiclePreviewProp.GetTransform().Rotation.ApplyYaw(1.95 * PiFloat), 5.0)
         
     UpdatePreview<public>( Vehicle : vehicle_cosmetic) : void =
         # When vehicle being previewed is the same as the active vehicle
