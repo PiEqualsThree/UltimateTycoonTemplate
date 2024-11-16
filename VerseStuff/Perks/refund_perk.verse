@@ -62,17 +62,19 @@ refund_perk<public> := class(tycoon_perk):
                     UpgradeResult := TycoonManager.TycoonBuildingUpgradedEvent.Await()
                     UpgradeResult.Transaction
                     
-            if ( Transaction.Type = currency_type.Cash, Chance := (1.0 + (Level * 0.005)), Chance > GetRandomFloat(1.0, 100.0)):
+            if ( Transaction.Type = currency_type.Cash, Chance := (Level * 5), Chance > GetRandomInt(1, 1000)):
                 CashbackTransaction := currency_transaction{ Amount := Transaction.Amount, Type := Transaction.Type }
                 TycoonManager.CurrencyManager.IncreaseCurrency(Owner, CashbackTransaction)
                 TycoonManager.UIManager.DisplayIncomeGain(Owner, CashbackTransaction, ?AdditionalText := " (Full Refund!)", ?TextColor := MakeColorFromHex("00FF38FF"))
                 Settings.RefundAudio.Play(Owner.Player)
+            else:
+                Print("Not a full refund!")
                 
     SetLevel<override>(InLevel : int) : void = set Level = InLevel
     GetLevel<override>()<transacts> : int = Level
     GetDescription<override>()<transacts> : string = 
-        <# TODO: Make percent dynamic #>
-        "1.25% chance of being fully\n" + 
+        Thing := (Level * 5.0) / 10.0
+        "{FormatFloat(Thing, 1)}% chance of being fully\n" + 
         "refunded on a purchase"
 
 refund_perk_settings<public> := class<concrete>(tycoon_perk_settings):

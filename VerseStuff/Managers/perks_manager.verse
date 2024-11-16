@@ -17,6 +17,8 @@ perks_manager<public> := class<concrete>:
     @editable       CashbackPerkSettings : cashback_perk_settings = cashback_perk_settings{}
     @editable       RefundPerkSettings : refund_perk_settings = refund_perk_settings{}
     @editable       ExtraXPPerkSettings : extra_xp_perk_settings = extra_xp_perk_settings{}
+    @editable       EquipAudio : audio_player_device = audio_player_device{}
+    @editable       LockedAudio : audio_player_device = audio_player_device{}
 
     ResetEvent : event() = event(){}
     RefundPerk : refund_perk = refund_perk{}
@@ -71,12 +73,17 @@ perks_manager<public> := class<concrete>:
     EquipPerk(Owner : custom_player, PerkSlot : int, PerkID : int) : void =
         <# Don't do anything if perk is same as current perk in slot #>
         for ( SlotIndex->SlotPerkID : SelectedPerksIDMap, SlotPerkID = PerkID) do return
+        <# Don't equip perk if it's locked #>
+        if ( Perk := TycoonPerks[PerkID], Perk.GetLevel() < 1):
+            LockedAudio.Play(Owner.Player)
+            return
         <# Disable current perk #>
         if ( CurrentPreviousPerkID := SelectedPerksIDMap[PerkSlot], CurrentPerk := TycoonPerks[PerkID]):
             CurrentPerk.Disable()
         <# Activate new perk if it exists #>
         if ( NewPerk := TycoonPerks[PerkID], TycoonManager := Owner.MaybeTycoonManager?, set SelectedPerksIDMap[PerkSlot] = PerkID):
             NewPerk.Enable(Owner, TycoonManager)
+            EquipAudio.Play(Owner.Player)
         <# Set perk as empty (???) #>
         else:
             if ( set SelectedPerksIDMap[PerkSlot] = -1) {}
@@ -136,13 +143,17 @@ perks_selection_ui := class:
             NewWidget
         set RootWidget = CreateUI()
         Canvas.AddWidget(canvas_slot{Widget := RootWidget})
+        RootWidget.SetVisibility(widget_visibility.Hidden)
 
     Display(CustomPlayer : custom_player) : void =
         if ( PlayerUI := GetPlayerUI[CustomPlayer.Player]):
             PlayerUI.AddWidget(Canvas, player_ui_slot{InputMode := ui_input_mode.All})
+            RootWidget.SetVisibility(widget_visibility.Visible)
 
     Remove(CustomPlayer : custom_player) : void =
-        if ( PlayerUI := GetPlayerUI[CustomPlayer.Player]) then PlayerUI.RemoveWidget(Canvas)
+        if ( PlayerUI := GetPlayerUI[CustomPlayer.Player]):
+            PlayerUI.RemoveWidget(Canvas)
+            RootWidget.SetVisibility(widget_visibility.Hidden)
 
     RefreshAvailablePerks(TycoonPerks : []tycoon_perk) : void =
         # UnlockedPerkIDs := for ( PerkID->PerkLevel : PerkLevelIDMap, PerkLevel > 0) do PerkID
@@ -176,15 +187,18 @@ perks_selection_ui := class:
                         Slots := ActivePerkWidgetStackBoxSlots
                 overlay_slot: <# Exit Button (Done) #>
                     VerticalAlignment := vertical_alignment.Bottom
+                    HorizontalAlignment := horizontal_alignment.Fill
                     Padding := margin{Bottom := 35.0}
-                    Widget := overlay:
-                        Slots := array:
-                            overlay_slot:
-                                Widget := color_block{DefaultDesiredSize := vector2{ X := 512.0, Y := 115.0}, DefaultOpacity := 0.0}
-                            overlay_slot:
-                                Widget := ExitButton 
-                                HorizontalAlignment := horizontal_alignment.Fill
-                                VerticalAlignment := vertical_alignment.Fill
+                    Widget := button:
+                        Slot := button_slot:
+                            Widget := overlay:
+                                Slots := array:
+                                    overlay_slot:
+                                        Widget := color_block{DefaultDesiredSize := vector2{ X := 512.0, Y := 115.0}, DefaultOpacity := 0.0}
+                                    overlay_slot:
+                                        Widget := ExitButton 
+                                        HorizontalAlignment := horizontal_alignment.Fill
+                                        VerticalAlignment := vertical_alignment.Fill
 
     GetRootWidget()<transacts> : widget = RootWidget
     GetCanvas()<transacts> : canvas = Canvas
@@ -215,6 +229,7 @@ perk_selection_widget := class:
                                 Widget := PerkDescriptionTextBlock
                 overlay_slot: <# Selection Button #>
                     VerticalAlignment := vertical_alignment.Bottom
+                    HorizontalAlignment := horizontal_alignment.Fill
                     Padding := margin{ Bottom := 15.0}
                     Widget := overlay:
                         Slots := array:

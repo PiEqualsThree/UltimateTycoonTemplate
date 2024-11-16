@@ -24,14 +24,14 @@ currency_manager<public> := class<concrete>:
     IncreaseCurrency<public>(CustomPlayer : custom_player, Transaction : currency_transaction) : void =
         case(Transaction.Type):
             currency_type.Cash => CustomPlayer.SetCash(CustomPlayer.Cash + Transaction.Amount)
-            currency_type.Candy => CustomPlayer.SetSubscribers(CustomPlayer.Candy + Transaction.Amount)   
+            currency_type.Candy => CustomPlayer.SetCandy(CustomPlayer.Candy + Transaction.Amount)   
             currency_type.BlingBucks => CustomPlayer.SetBlingBucks(CustomPlayer.BlingBucks + Transaction.Amount)
         UIManager.UpdateCurrencyUI(CustomPlayer, Transaction.Type)
 
     DecreaseCurrency<public>(CustomPlayer : custom_player, Transaction : currency_transaction) : void = 
         case(Transaction.Type):
             currency_type.Cash => CustomPlayer.SetCash(CustomPlayer.Cash - Transaction.Amount)
-            currency_type.Candy => CustomPlayer.SetSubscribers(CustomPlayer.Candy - Transaction.Amount)
+            currency_type.Candy => CustomPlayer.SetCandy(CustomPlayer.Candy - Transaction.Amount)
             currency_type.BlingBucks => CustomPlayer.SetBlingBucks(CustomPlayer.BlingBucks - Transaction.Amount)
         UIManager.UpdateCurrencyUI(CustomPlayer, Transaction.Type)
 

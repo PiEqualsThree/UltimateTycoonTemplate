@@ -2,14 +2,32 @@ using { /Verse.org/Assets }
 
 cosmetic_data<public> := interface:
     GetName<public>()<transacts> : string
-    GetIndex<public>()<transacts> : int
-    GetThumbnail<public>()<transacts> : texture
+    GetID<public>()<transacts> : int
+    GetImage<public>()<transacts> : texture
 
 aura_cosmetic_data<public> := class<computes>(cosmetic_data):
+    ID<public> : int
     Name<public> : string 
-    Index<public> : int
-    Thumbnail<public> : texture
+    Image<public> : texture
 
+    GetID<override>()<transacts> : int = ID
     GetName<override>()<transacts> : string = Name
-    GetIndex<override>()<transacts> : int = Index
-    GetThumbnail<override>()<transacts> : texture = Thumbnail
+    GetImage<override>()<transacts> : texture = Image
+
+vehicle_cosmetic_data<public> := class<computes>(cosmetic_data):
+    ID<public> : int
+    Name<public> : string 
+    Image<public> : texture
+
+    GetID<override>()<transacts> : int = ID
+    GetName<override>()<transacts> : string = Name
+    GetImage<override>()<transacts> : texture = Image
+
+vfx_cosmetic_data<public> := class<computes>(cosmetic_data):
+    ID<public> : int
+    Name<public> : string 
+    Image<public> : texture
+
+    GetID<override>()<transacts> : int = ID
+    GetName<override>()<transacts> : string = Name
+    GetImage<override>()<transacts> : texture = Image

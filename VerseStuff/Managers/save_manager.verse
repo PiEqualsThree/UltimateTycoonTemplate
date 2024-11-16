@@ -42,18 +42,19 @@ save_manager<public> := class:
             CurrentXP := Owner.TycoonLevel.CurrentLevelXP
             TotalXP := Owner.TycoonLevel.TotalXP
         
-    GetBuildingStats()<suspends> : tycoon_building_stats = 
+    GetBuildingStats(TycoonManager : tycoon_manager, ShouldResetTycoonStats : logic)<suspends> : tycoon_building_stats = 
         Sleep(0.0)
         tycoon_building_stats:
-            PurchasedBuildingIDs := PurchasedBuildingIDs
-            UnlockedBuildingIDs := UnlockedBuildingIDs
-            UpgradableBuildingLevelMap := UpgradableBuildingLevelMap
+            CurrencyCollectorCash := ShouldResetTycoonStats? and TycoonManager.CurrencyCollector.StoredCash or 0
+            PurchasedBuildingIDs := ShouldResetTycoonStats? and PurchasedBuildingIDs or array{}
+            UnlockedBuildingIDs := ShouldResetTycoonStats? and UnlockedBuildingIDs or array{-1}
+            UpgradableBuildingLevelMap := ShouldResetTycoonStats? and UpgradableBuildingLevelMap or map{}
 
-    GetCurrencyStats(Owner : custom_player)<suspends> : tycoon_currency_stats =
+    GetCurrencyStats(Owner : custom_player, ShouldResetCurrency : logic)<suspends> : tycoon_currency_stats =
         Sleep(0.0)
         tycoon_currency_stats:
-            Cash := Owner.Cash
-            Candy := Owner.Candy
+            Cash := ShouldResetCurrency? and Owner.Cash or 0
+            Candy := ShouldResetCurrency? and Owner.Candy or 0
             BlingBucks := Owner.BlingBucks
             Rebirths := Owner.Rebirths
         
@@ -73,12 +74,12 @@ save_manager<public> := class:
         Sleep(0.0)
         TycoonManager.PumpkinCarvingStation.PumpkinCarvingManager.GetStats()
 
-    GetPlayerStats(Owner : custom_player, TycoonManager : tycoon_manager)<suspends> : player_stats =
+    GetPlayerStats(Owner : custom_player, TycoonManager : tycoon_manager, ?ShouldResetTycoonStats : logic)<suspends> : player_stats =
         LevelStats := GetLevelStats(Owner)
-        CurrencyStats := GetCurrencyStats(Owner)
+        CurrencyStats := GetCurrencyStats(Owner, ShouldResetTycoonStats)
         PerkStats := GetPerkStats(TycoonManager)
         CosmeticStats := GetCosmeticStats(TycoonManager)
-        BuildingStats := GetBuildingStats()
+        BuildingStats := GetBuildingStats(TycoonManager, ShouldResetTycoonStats)
         SeasonPassStats := GetSeasonPassStats(TycoonManager)
         PumpkinCarvingStats := GetPumpkinCarvingStats(TycoonManager)
         player_stats:

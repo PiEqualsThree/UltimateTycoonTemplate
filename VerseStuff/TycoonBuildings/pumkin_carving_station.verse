@@ -51,10 +51,9 @@ pumpkin_carving_station<public> := class<concrete>(tycoon_building, purchasable,
     Purchase<override>(Owner : custom_player, ?PlayAnimations : logic = true) : void = 
         if ( PurchaseStatus <> purchase_status.Purchased, TycoonManager := Owner.MaybeTycoonManager?):
             set PurchaseStatus = purchase_status.Purchased   
-            spawn{ DoTycoonHideAnimation(PurchaseButton, DefaultPurchaseButtonTransform, ?PlayAnimations := PlayAnimations)}
-            spawn{ DoTycoonPopupAnimation(ContainerProp, DefaultContainerPropTransform, ?PlayAnimations := PlayAnimations)}
+            spawn{ DoTycoonHideAnimation(PurchaseButton, DefaultPurchaseButtonTransform, ?PlayAnimations := logic{PlayAnimations? and UseBuildAnimation?})}
+            spawn{ DoTycoonPopupAnimation(ContainerProp, DefaultContainerPropTransform, ?PlayAnimations := logic{PlayAnimations? and UseBuildAnimation?})}
             if ( PlayAnimations?):
-                <# TODO: Spawn VFX Here #>
                 if ( Cinematic := TycoonCinematic?) then spawn{ Cinematic.Play(Owner)}
             BuildingPurchasedEvent.Signal()
             # WARNING: Potentially can load data after buying something, which might override the save data if purchasing doesn't immediately update save data

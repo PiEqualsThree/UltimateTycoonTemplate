@@ -43,13 +43,14 @@ FormatNumber(Amount : int) : string =
         return for ( I := 0..(-13 + StringAmount.Length), NumChar := StringAmount[I]){ NumChar } + (not (StringAmount[-12 + StringAmount.Length] = '0' and StringAmount[-11 + StringAmount.Length] = '0') and "." + for ( I := -12 + StringAmount.Length..-11 + StringAmount.Length, Decimal := StringAmount[I]) {Decimal} or "") + "T"
     ToString(Amount)
 
-FormatFloat(Float : float, Decimals : int) : string =
+FormatFloat(Float : float, Decimals : int)<transacts> : string =
     var DecimalStr : string = ""
     DecimalString := ToString(Float) 
     if ( Index := DecimalString.Find['.']):
         set DecimalStr = for ( I := 0..Index - 1, Char := DecimalString[I]) { Char} + "."
         set DecimalStr += for ( I := Index + 1..Index + Decimals, NextDecimal := DecimalString[I]) do NextDecimal
     return DecimalStr
+clamped_float := type {_X:float where 0.000000 <= _X, _X <= 1.000000}
 
 StubMessage<localizes> : message = ""
 IdentityVector : vector3 = vector3{ X := 1.0, Y := 1.0, Z := 1.0}

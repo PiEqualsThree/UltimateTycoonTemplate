@@ -37,7 +37,7 @@ phone_building<public> := class<concrete>(tycoon_building, purchasable, resetabl
         set DefaultPurchaseButtonTransform = PurchaseButton.GetTransform()
 
     Init<override>(TycoonManager : tycoon_manager) : void =
-        #PhoneManager.Init(TycoonManager, TycoonManager.MaybeGameManager?.CollabSettings or collab_settings{})
+        PhoneManager.Init(TycoonManager, TycoonManager.MaybeGameManager?.CollabSettings or collab_settings{})
         if:
             ContainerProp.TeleportTo[DefaultContainerPropTransform.Translation - vector3{ Z := 3000.0}, DefaultContainerPropTransform.Rotation]
             PurchaseButton.TeleportTo[DefaultPurchaseButtonTransform.Translation - vector3{ Z := 3000.0}, DefaultPurchaseButtonTransform.Rotation]
@@ -47,7 +47,6 @@ phone_building<public> := class<concrete>(tycoon_building, purchasable, resetabl
         ResetEvent().Signal()
         PhoneManager.Reset()
 
-
     Unlock<override>(Owner : custom_player, ?PlayAnimations : logic = true) : void =
         if ( PurchaseStatus = purchase_status.Locked):
             set PurchaseStatus = purchase_status.Unlocked
@@ -56,11 +55,10 @@ phone_building<public> := class<concrete>(tycoon_building, purchasable, resetabl
     Purchase<override>(Owner : custom_player, ?PlayAnimations : logic = true) : void = 
         if ( PurchaseStatus <> purchase_status.Purchased):
             set PurchaseStatus = purchase_status.Purchased   
-            spawn{ DoTycoonHideAnimation(PurchaseButton, DefaultPurchaseButtonTransform, ?PlayAnimations := PlayAnimations)}
-            spawn{ DoTycoonPopupAnimation(ContainerProp, DefaultContainerPropTransform, ?PlayAnimations := PlayAnimations)}
+            spawn{ DoTycoonHideAnimation(PurchaseButton, DefaultPurchaseButtonTransform, ?PlayAnimations := logic{PlayAnimations? and UseBuildAnimation?})}
+            spawn{ DoTycoonPopupAnimation(ContainerProp, DefaultContainerPropTransform, ?PlayAnimations := logic{PlayAnimations? and UseBuildAnimation?})}
             if ( TycoonManager := Owner.MaybeTycoonManager?) then spawn{ PhoneManager.Update(Owner, TycoonManager) }
             if ( PlayAnimations?):
-                #SpawnPurchaseVFX(Self, DefaultContainerPropTransform.Translation)
                 if ( Cinematic := TycoonCinematic?) then spawn{ Cinematic.Play(Owner)}
 
     ResetEvent<override>() : event() = BuildingResetEvent

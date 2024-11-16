@@ -16,8 +16,10 @@ time_gift_box := class<concrete>(resetable):
     @editable       GiftBoxContainer : creative_prop = creative_prop{}
     @editable       BaseContainer : creative_prop = creative_prop{}
     @editable       Button : button_device = button_device{}
+    @editable       ClaimAudio : audio_player_device = audio_player_device{}
     @editable       GiftReadyHudDevice : hud_message_device = hud_message_device{}
     @editable       Gifts : []tycoon_gift = array{}
+    
 
     UI : gift_ui = gift_ui{}
     CurrencyGenerationEvent : event(currency_transaction) = event(currency_transaction){}
@@ -90,6 +92,7 @@ time_gift_box := class<concrete>(resetable):
             RemoveGiftFromTimedGiftsMap(Gift)
             set GiftsReadyToClaim = GiftsReadyToClaim - 1
             UI.SetGiftAsClaimed(GiftIndex)
+            UI.Remove(Owner)
             Gift.Claim()
             CashGain := CurrencyManager.GetCustomPlayerCurrencyGain(Owner, Gift.GetCashReward() )
             CandyGain := CurrencyManager.GetCustomPlayerCurrencyGain(Owner, Gift.GetCandyReward())
@@ -97,6 +100,7 @@ time_gift_box := class<concrete>(resetable):
             CandyTransaction := currency_transaction{Type := currency_type.Candy, Amount := CandyGain}
             CurrencyManager.IncreaseCurrency(Owner, CashTransaction)
             CurrencyManager.IncreaseCurrency(Owner, CandyTransaction)
+            ClaimAudio.Play(Owner.Player)
             spawn{ DisplayCurrencyGain(Owner, UIManager, array{CashTransaction, CandyTransaction})}
             if ( GiftsReadyToClaim = 0) then GiftReadyHudDevice.Hide(Owner.Player)
             else: 
@@ -104,9 +108,11 @@ time_gift_box := class<concrete>(resetable):
                 GiftReadyHudDevice.Show(Owner.Player)
 
     DisplayCurrencyGain(Owner : custom_player, UIManager : user_interface_manager, Transactions : []currency_transaction)<suspends> : void =
+        Sleep(0.25)
         for ( Index->Transaction : Transactions):
             UIManager.DisplayIncomeGain(Owner, Transaction, ?AdditionalText := " (Free Reward!)", ?TextColor := MakeColorFromHex("FDFF00FF"))
-            Sleep(0.75)
+            Sleep(1.0)
+
     (Gift : tycoon_gift).AwaitReadyEvent(Owner : custom_player, GiftIndex : int)<suspends> : void =
         race:
             ResetEvent().Await()
@@ -206,11 +212,19 @@ gift_ui := class:
         ResetEvent.Signal()
         for ( Button : Buttons) do Button.SetText(StringToMessage(""))
 
-    Display(Owner : custom_player)<suspends> : void =
+    Display(Owner : custom_player) : void =
         if ( PlayerUI := GetPlayerUI[Owner.Player]):
             PlayerUI.AddWidget(Canvas, player_ui_slot{InputMode := ui_input_mode.All})
-            ExitButton.OnClick().Await()
+            RootWidget.SetVisibility(widget_visibility.Visible)
+            # race:
+            #     ExitButton.OnClick().Await()
+            #     GiftButtonClickedEvent.Await()
+            
+
+    Remove(Owner : custom_player) : void =
+        if ( PlayerUI := GetPlayerUI[Owner.Player]):
             PlayerUI.RemoveWidget(Canvas)
+            RootWidget.SetVisibility(widget_visibility.Hidden)
 
     RefreshTimers(Gifts : [int]tycoon_gift) : void =
         for ( ID->Gift : Gifts, Button := Buttons[ID]):

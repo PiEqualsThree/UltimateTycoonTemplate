@@ -13,6 +13,7 @@ using { /UnrealEngine.com/Temporary/Diagnostics }
 using { /UnrealEngine.com/Temporary/UI }
 using { TycoonInterfaces }
 using { UIStuff}
+using { UIStuff.TrickOrTreatUI }
 
 trick_or_treat_manager<public> := class(resetable):
 
@@ -122,7 +123,7 @@ collab_ui := class:
         set RootWidget = overlay:
             Slots := array:
                 overlay_slot:
-                    Widget := texture_block{ DefaultImage := T_Place_Holder, DefaultDesiredSize := vector2{ X := 1024.0, Y := 128.0}}
+                    Widget := texture_block{ DefaultImage := T_Trick_Or_Treat_Banner, DefaultDesiredSize := vector2{ X := 1024.0, Y := 128.0}}
                 overlay_slot:
                     HorizontalAlignment := horizontal_alignment.Right
                     VerticalAlignment := vertical_alignment.Center

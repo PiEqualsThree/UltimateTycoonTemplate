@@ -7,6 +7,7 @@ using { /Verse.org/Simulation }
 using { /Verse.org/Simulation/Tags }
 using { /Verse.org/Random }
 using { /Verse.org/Assets }
+using { /Verse.org/Colors }
 using { /UnrealEngine.com/Temporary }
 using { /UnrealEngine.com/Temporary/SpatialMath }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -15,6 +16,7 @@ using { PumpkinCarving}
 using { VerseStuff.Managers }
 using { VerseStuff.TycoonInterfaces }
 using { TycoonAnimations }
+using { Materials }
 using { UIStuff}
 using { UIStuff.PumpkinCarvingUI}
 using { UIStuff.PumpkinCarvingUI.PumpkinEyes}
@@ -24,8 +26,12 @@ using { PumpkinStuff.PumpkinTops}
 pumpkin_carving_manager<public> := class<concrete>:
     @editable       InteractButton : button_device = button_device{}
     @editable       Camera : gameplay_camera_fixed_point_device = gameplay_camera_fixed_point_device{}
-    @editable       Shop : pumpkin_carving_components_shop = pumpkin_carving_components_shop{}
+    @editable       Shop : pumpkin_carving_shop = pumpkin_carving_shop{}
+    @editable       ScorePageVFX : vfx_spawner_device = vfx_spawner_device{}
+    @editable       ScoreResultAudio<public> : audio_player_device = audio_player_device{}
+    @editable       ScoreStarAudios<public> : []audio_player_device = array{}
 
+    @editable       CustomerCooldownProp : creative_prop = creative_prop{}
     @editable       CustomerReadyBeacon : beacon_device = beacon_device{}
     @editable       CustomerSpawnVFX : vfx_spawner_device = vfx_spawner_device{}
     @editable       CustomerDespawnVFX : vfx_spawner_device = vfx_spawner_device{}
@@ -37,18 +43,27 @@ pumpkin_carving_manager<public> := class<concrete>:
     @editable       PumpkinTop : creative_prop = creative_prop{}
     @editable       EyeDecalAssets : []creative_prop_asset = array{}
     @editable       MouthDecalAssets : []creative_prop_asset = array{}
+
+    @editable       TutorialSettings : ?pumpkin_carving_tutorial_settings = false
     
     PumpkinUI : pumpkin_carving_ui = pumpkin_carving_ui{}
     ResetEvent : event() = event(){}
     PumpkinCarvingBeginEvent : event() = event(){}
     PumpkinCarvingEndEvent : event() = event(){}
     ScoreWidget : pumpkin_carving_score_widget = pumpkin_carving_score_widget{}
+
+    ComponentSwitchThrottleTime : float = 0.25
     
+    var MaybeOwner : ?custom_player = false
+    var CustomerCooldownMaterial : M_Hitbox_Progress_material = M_Hitbox_Progress_material{}
+    var DefaultCooldownPropTransform : transform = transform{}
+
     var EyeDecals<public> : []creative_prop = array{}
     var MouthDecals<public> : []creative_prop = array{}
     var CurrentEyeDecal : ?creative_prop = false
     var CurrentMouthDecal : ?creative_prop = false
 
+    var ShouldShowTutorial : logic = false
     var IsCustomerReady : logic = false
     var AllowComponentChange : logic = true
     var CurrentCharacterDevice : character_device = character_device{}
@@ -68,11 +83,15 @@ pumpkin_carving_manager<public> := class<concrete>:
     var UnlockedMouthIDs<public> : []int = array{}
 
     var SelectedColorID : int = 0
-    var SelectedTopID : int = 0
-    var SelectedEyesID : int = 0
-    var SelectedMouthID : int = 0 
+    var SelectedTopID : int = -1
+    var SelectedEyesID : int = -1
+    var SelectedMouthID : int = -1 
     
     UniqueBegin<public>()<suspends> : void =
+        set DefaultCooldownPropTransform = CustomerCooldownProp.GetTransform()
+        set CustomerCooldownMaterial.FillColor = MakeColorFromHex("FFE800FF")
+        set CustomerCooldownMaterial.BackgroundColor = MakeColorFromHex("54280BFF")
+        CustomerCooldownProp.SetMaterial(CustomerCooldownMaterial)
         Shop.UniqueBegin()
         PumpkinUI.UniqueBegin()
         ScoreWidget.UniqueBegin()
@@ -97,6 +116,8 @@ pumpkin_carving_manager<public> := class<concrete>:
         for ( Device : CustomerCharacterDevices) do Device.Hide()
         for ( Decal : EyeDecals) do Decal.Hide()
         for ( Decal : MouthDecals) do Decal.Hide()
+        if ( CustomerCooldownProp.TeleportTo[DefaultCooldownPropTransform.Translation - vector3{ Z := 3000.0}, DefaultCooldownPropTransform.Rotation]) {}
+        ScoreWidget.Hide()
         PumpkinBase.Hide()
         PumpkinTop.Hide()
         Shop.Init()
@@ -106,38 +127,106 @@ pumpkin_carving_manager<public> := class<concrete>:
         for ( ID : PlayerStats.PumpkinCarvingStats.UnlockedTopIDs) do UnlockTop(ID)
         for ( ID : PlayerStats.PumpkinCarvingStats.UnlockedEyeIDs) do UnlockEyes(ID)
         for ( ID : PlayerStats.PumpkinCarvingStats.UnlockedMouthIDs) do UnlockMouth(ID)
+        set MaybeOwner = option{Owner}
+        set ShouldShowTutorial = logic{Owner.Rebirths = 0 and Owner.TycoonLevel.GetLevel() <= 3}
         Sleep(0.0)
         for ( Device : CustomerCharacterDevices) do Device.Hide()
         Shop.LoadData(Owner, Self)
         spawn{Update(Owner)}
-
+        
     Update(Owner : custom_player)<suspends> : void =
         Sleep(1.0)
         race:
             ResetEvent.Await()
             PollPumpkinCarvingEvents(Owner)
-            loop: <# Spawn Customer Loop #>
-                set IsCustomerReady = true
-                set CurrentCharacterDevice = CustomerCharacterDevices[GetRandomInt(0, CustomerCharacterDevices.Length - 1)] or CurrentCharacterDevice   
-                CustomerSpawnVFX.Restart()
-                CustomerReadyBeacon.Enable()
-                CurrentCharacterDevice.Show()
-                CurrentCharacterDevice.PlayEmote()
-                PumpkinCarvingEndEvent.Await()
-                Sleep(3.0)    
-                InteractButton.Enable() 
+            AwaitCustomerReadyEvents()
+
+    BeginPumpkinCarving(Owner : custom_player, MetricWeightSheet : [pumpkin_carving_metric]int)<suspends> : void =
+        set AllowComponentChange = true
+        InteractButton.Disable()
+        PumpkinBase.Show()
+        PumpkinTop.Show()
+        CustomerReadyBeacon.Disable()
+        PumpkinUI.Display(Owner)
+        PumpkinUI.UpdateComponentPage(Self, PumpkinUI.CurrentComponentPageIndex)
+        UpdateColorComponent(SelectedColorID)
+        UpdateTopComponent(SelectedTopID)
+        UpdateEyesComponent(SelectedEyesID)
+        UpdateMouthComponent(SelectedMouthID)
+        UpdateMetricTotalMap()
+        if ( ShouldShowTutorial?, Settings := TutorialSettings?):
+            Settings.DecorateHud.Show(Owner.Player)
+            spawn{ Settings.QueueDisplayCustomerTutorial(Owner)}
+        else:
+            DisplayCurrentScoreFeedback(CurrentMetricTotalMap, MetricWeightSheet)
+
+        Camera.AddTo(Owner.Agent)
+        Owner.FortCharacter.Hide()
+
+    FinishPumpkinCarving(Owner : custom_player, PumpkinCarvingResult : pumpkin_carving_score_result)<suspends> : void =
+        Print("Pumpkin score: {PumpkinCarvingResult.Score}")
+        PumpkinUI.Remove(Owner)
+        ScoreWidget.Display(Owner, Self, PumpkinCarvingResult)
+        ScorePageVFX.Restart()
+        Owner.FortCharacter.Show()
+        Camera.RemoveFrom(Owner.Agent)
+        set IsCustomerReady = false
+        CurrentCharacterDevice.PlayEmote()
+        Sleep(1.0)
+        if ( ShouldShowTutorial?) then Print("Hfajd;fakjsf")
+        CustomerDespawnVFX.Restart()
+        CustomerReadyBeacon.Disable()
+        CurrentCharacterDevice.Hide()
+        PumpkinCarvingEndEvent.Signal()
+        if ( TycoonManager := Owner.MaybeTycoonManager?):
+            CashTransaction := currency_transaction{Amount := PumpkinCarvingResult.CashGain, Type := currency_type.Cash}
+            CandyTransaction := currency_transaction{Amount := PumpkinCarvingResult.CandyGain, Type := currency_type.Candy}
+            TycoonManager.UIManager.DisplayIncomeGain(Owner, CashTransaction)
+            TycoonManager.CurrencyManager.IncreaseCurrency(Owner, CashTransaction)
+            Sleep(1.25)
+            TycoonManager.UIManager.DisplayIncomeGain(Owner, CandyTransaction)
+            TycoonManager.CurrencyManager.IncreaseCurrency(Owner, CandyTransaction)
+        if ( ShouldShowTutorial?, Settings := TutorialSettings?) then spawn{ Settings.QueueDisplayShopTutorial(Owner) }
+        set SelectedColorID = 0
+        set SelectedTopID = -1
+        set SelectedEyesID = -1
+        set SelectedMouthID = -1
+        set ShouldShowTutorial = false
 
     PollPumpkinCarvingEvents(Owner : custom_player)<suspends> : void =
         loop:
             Agent := InteractButton.InteractedWithEvent.Await()
             if ( Owner.Agent = Agent, IsCustomerReady?):
+                # Generates a metric sheet, used for determening score
                 MetricWeightSheet := GenerateMetricWeightSheet()
-                BeginPumpkinCarving(Owner)
-                PollUIEvents(Owner, MetricWeightSheet)
-                FinishPumpkinCarving(Owner)
-                Owner.FortCharacter.Show()
+                BeginPumpkinCarving(Owner, MetricWeightSheet)
+                AwaitPumpkinCarvingUIEvents(Owner, MetricWeightSheet)
+                Score := CalculatePumpkinCarvingScore(CurrentMetricTotalMap, MetricWeightSheet)
+                FinalResult := pumpkin_carving_score_result:
+                    Score := Score
+                    CashGain :=  60 + (Ceil[(0.37 * 0.01 * Score) * Max(Owner.Candy, 100)] or 1) 
+                    CandyGain := 18 + (Ceil[(0.15 * 0.01 * Score) * Max(Owner.Candy, 100)] or 1)
+                FinishPumpkinCarving(Owner, FinalResult)
 
-    PollUIEvents(Owner : custom_player, MetricWeightSheet : [pumpkin_carving_metric]int)<suspends> : void =
+    AwaitCustomerReadyEvents()<suspends> : void =
+        loop: <# Spawn Customer Loop #>  
+            # Ready Event
+            set IsCustomerReady = true
+            set CurrentCharacterDevice = CustomerCharacterDevices[GetRandomInt(0, CustomerCharacterDevices.Length - 1)] or CurrentCharacterDevice   
+            InteractButton.Enable() 
+            CustomerSpawnVFX.Restart()
+            CustomerReadyBeacon.Enable()
+            CurrentCharacterDevice.Show()
+            CurrentCharacterDevice.PlayEmote()
+            PumpkinCarvingEndEvent.Await()
+
+            TicksToReady : int = GetRandomInt(100, 750)
+            if ( CustomerCooldownProp.TeleportTo[DefaultCooldownPropTransform]) {}
+            for ( I := 1..TicksToReady) do {set CustomerCooldownMaterial.Progress = (1.0 * I) / (1.0 * TicksToReady); Sleep(0.0)}
+            if ( CustomerCooldownProp.TeleportTo[DefaultCooldownPropTransform.Translation - vector3{ Z := 3000.0}, rotation{}]) {}
+            
+
+    AwaitPumpkinCarvingUIEvents(Owner : custom_player, MetricWeightSheet : [pumpkin_carving_metric]int)<suspends> : void =
         race:
             ResetEvent.Await()
             PumpkinUI.FinishButton.OnClick().Await()
@@ -172,14 +261,14 @@ pumpkin_carving_manager<public> := class<concrete>:
                 ComponentChangeVFX.Restart()
                 Sleep(0.25)
                 case(PumpkinUI.CurrentComponentPageIndex):
-                    0 => UpdateColorComponent(ComponentIndex)
-                    1 => UpdateTopComponent(ComponentIndex)
-                    2 => UpdateEyesComponent(ComponentIndex)
-                    3 => UpdateMouthComponent(ComponentIndex)
+                    0 => if ( ID := UnlockedColorIDs[ComponentIndex]) then UpdateColorComponent(ID)
+                    1 => if ( ID := UnlockedTopIDs[ComponentIndex]) then UpdateTopComponent(ID)
+                    2 => if ( ID := UnlockedEyeIDs[ComponentIndex]) then UpdateEyesComponent(ID)
+                    3 => if ( ID := UnlockedMouthIDs[ComponentIndex]) then UpdateMouthComponent(ID)
                     _ => Print("Unkown Component Page")
                 UpdateMetricTotalMap()
-                DisplayCurrentScoreFeedback(MetricWeightSheet)
-                Sleep(0.5)
+                DisplayCurrentScoreFeedback(CurrentMetricTotalMap, MetricWeightSheet)
+                Sleep(ComponentSwitchThrottleTime)
                 set AllowComponentChange = true
 
     AwaitAndResolvePageButtonPress(Owner : custom_player, PageIndex : int)<suspends> : void =
@@ -189,33 +278,6 @@ pumpkin_carving_manager<public> := class<concrete>:
             Button.OnClick().Await()
             if ( PumpkinUI.CurrentComponentPageIndex <> PageIndex):
                 PumpkinUI.UpdateComponentPage(Self, PageIndex)
-
-    BeginPumpkinCarving(Owner : custom_player)<suspends> : void =
-        set AllowComponentChange = true
-        InteractButton.Disable()
-        PumpkinBase.Show()
-        PumpkinTop.Show()
-        CustomerReadyBeacon.Disable()
-        PumpkinUI.Display(Owner)
-        PumpkinUI.UpdateComponentPage(Self, PumpkinUI.CurrentComponentPageIndex)
-        UpdateColorComponent(SelectedColorID)
-        UpdateTopComponent(SelectedTopID)
-        UpdateEyesComponent(SelectedEyesID)
-        UpdateMouthComponent(SelectedMouthID)
-        UpdateMetricTotalMap()
-        Camera.AddTo(Owner.Agent)
-        Owner.FortCharacter.Hide()
-
-    FinishPumpkinCarving(Owner : custom_player)<suspends> : void =
-        PumpkinUI.Remove(Owner)
-        Camera.RemoveFrom(Owner.Agent)
-        set IsCustomerReady = false
-        CurrentCharacterDevice.PlayEmote()
-        Sleep(1.0)
-        CustomerDespawnVFX.Restart()
-        CustomerReadyBeacon.Disable()
-        CurrentCharacterDevice.Hide()
-        PumpkinCarvingEndEvent.Signal()
     
     UpdateColorComponent(ComponentIndex : int) : void =
         set SelectedColorID = ComponentIndex
@@ -226,28 +288,32 @@ pumpkin_carving_manager<public> := class<concrete>:
         if ( Mesh := PumpkinTopMeshes[ComponentIndex]):
             Print("Setting mesh {ComponentIndex}!")
             set SelectedTopID = ComponentIndex
+            PumpkinTop.Show()
             PumpkinTop.SetMesh(Mesh)
+        else:
+            PumpkinTop.Hide()
 
     UpdateEyesComponent(ComponentIndex : int) : void =
         if ( CurrentDecal := CurrentEyeDecal?) then CurrentDecal.Hide()
-        if ( Decal := EyeDecals[ComponentIndex]):
+        if ( Decal := EyeDecals[ComponentIndex], Decal.TeleportTo[PumpkinBase.GetTransform().Translation + vector3{Z := 25.0}, PumpkinBase.GetTransform().Rotation]):
             set SelectedEyesID = ComponentIndex
             set CurrentEyeDecal = option{Decal}
             Decal.Show()
             
     UpdateMouthComponent(ComponentIndex : int) : void =
         if ( CurrentDecal := CurrentMouthDecal?) then CurrentDecal.Hide()
-        if ( Decal := MouthDecals[ComponentIndex]):
+        if ( Decal := MouthDecals[ComponentIndex], Decal.TeleportTo[PumpkinBase.GetTransform().Translation + vector3{Z := 25.0}, PumpkinBase.GetTransform().Rotation]):
             set SelectedMouthID = ComponentIndex
             set CurrentMouthDecal = option{Decal}
             Decal.Show()
+        
 
     UpdateMetricTotalMap() : void =
-        MetricATotal := (PumpkinColorMetricSheet[SelectedColorID][pumpkin_carving_metric.MetricA] + PumpkinTopMetricSheet[SelectedTopID][pumpkin_carving_metric.MetricA] + PumpkinEyesMetricSheet[SelectedEyesID][pumpkin_carving_metric.MetricA] + PumpkinMouthMetricSheet[SelectedMouthID][pumpkin_carving_metric.MetricA]) or 1
-        MetricBTotal := (PumpkinColorMetricSheet[SelectedColorID][pumpkin_carving_metric.MetricB] + PumpkinTopMetricSheet[SelectedTopID][pumpkin_carving_metric.MetricB] + PumpkinEyesMetricSheet[SelectedEyesID][pumpkin_carving_metric.MetricB] + PumpkinMouthMetricSheet[SelectedMouthID][pumpkin_carving_metric.MetricB]) or 1
-        MetricCTotal := (PumpkinColorMetricSheet[SelectedColorID][pumpkin_carving_metric.MetricC] + PumpkinTopMetricSheet[SelectedTopID][pumpkin_carving_metric.MetricC] + PumpkinEyesMetricSheet[SelectedEyesID][pumpkin_carving_metric.MetricC] + PumpkinMouthMetricSheet[SelectedMouthID][pumpkin_carving_metric.MetricC]) or 1
-        MetricDTotal := (PumpkinColorMetricSheet[SelectedColorID][pumpkin_carving_metric.MetricD] + PumpkinTopMetricSheet[SelectedTopID][pumpkin_carving_metric.MetricD] + PumpkinEyesMetricSheet[SelectedEyesID][pumpkin_carving_metric.MetricD] + PumpkinMouthMetricSheet[SelectedMouthID][pumpkin_carving_metric.MetricD]) or 1
-        MetricETotal := (PumpkinColorMetricSheet[SelectedColorID][pumpkin_carving_metric.MetricE] + PumpkinTopMetricSheet[SelectedTopID][pumpkin_carving_metric.MetricE] + PumpkinEyesMetricSheet[SelectedEyesID][pumpkin_carving_metric.MetricE] + PumpkinMouthMetricSheet[SelectedMouthID][pumpkin_carving_metric.MetricE]) or 1
+        MetricATotal := (PumpkinColorMetricSheet[SelectedColorID][pumpkin_carving_metric.MetricA] or 0) + (PumpkinTopMetricSheet[SelectedTopID][pumpkin_carving_metric.MetricA] or 0) + (PumpkinEyesMetricSheet[SelectedEyesID][pumpkin_carving_metric.MetricA] or 0) + (PumpkinMouthMetricSheet[SelectedMouthID][pumpkin_carving_metric.MetricA] or 0)
+        MetricBTotal := (PumpkinColorMetricSheet[SelectedColorID][pumpkin_carving_metric.MetricB] or 0) + (PumpkinTopMetricSheet[SelectedTopID][pumpkin_carving_metric.MetricB] or 0) + (PumpkinEyesMetricSheet[SelectedEyesID][pumpkin_carving_metric.MetricB] or 0) + (PumpkinMouthMetricSheet[SelectedMouthID][pumpkin_carving_metric.MetricB] or 0)
+        MetricCTotal := (PumpkinColorMetricSheet[SelectedColorID][pumpkin_carving_metric.MetricC] or 0) + (PumpkinTopMetricSheet[SelectedTopID][pumpkin_carving_metric.MetricC] or 0) + (PumpkinEyesMetricSheet[SelectedEyesID][pumpkin_carving_metric.MetricC] or 0) + (PumpkinMouthMetricSheet[SelectedMouthID][pumpkin_carving_metric.MetricC] or 0)
+        MetricDTotal := (PumpkinColorMetricSheet[SelectedColorID][pumpkin_carving_metric.MetricD] or 0) + (PumpkinTopMetricSheet[SelectedTopID][pumpkin_carving_metric.MetricD] or 0) + (PumpkinEyesMetricSheet[SelectedEyesID][pumpkin_carving_metric.MetricD] or 0) + (PumpkinMouthMetricSheet[SelectedMouthID][pumpkin_carving_metric.MetricD] or 0)
+        MetricETotal := (PumpkinColorMetricSheet[SelectedColorID][pumpkin_carving_metric.MetricE] or 0) + (PumpkinTopMetricSheet[SelectedTopID][pumpkin_carving_metric.MetricE] or 0) + (PumpkinEyesMetricSheet[SelectedEyesID][pumpkin_carving_metric.MetricE] or 0) + (PumpkinMouthMetricSheet[SelectedMouthID][pumpkin_carving_metric.MetricE] or 0)
         set CurrentMetricTotalMap = map:
             pumpkin_carving_metric.MetricA => MetricATotal
             pumpkin_carving_metric.MetricB => MetricBTotal
@@ -255,14 +321,15 @@ pumpkin_carving_manager<public> := class<concrete>:
             pumpkin_carving_metric.MetricD => MetricDTotal
             pumpkin_carving_metric.MetricE => MetricETotal
 
-    DisplayCurrentScoreFeedback(MetricWeightSheet : [pumpkin_carving_metric]int)<suspends> : void =
-        CurrentScore := CalculatePumpkinCarvingScore(CurrentMetricTotalMap, MetricWeightSheet)
-        Satisfaction := (Ceil(CurrentScore / 10) - 1) or 0
+    DisplayCurrentScoreFeedback(CurrentMetricValues : [pumpkin_carving_metric]int, MetricWeightSheet : [pumpkin_carving_metric]int)<suspends> : void =
+        CurrentScore := CalculatePumpkinCarvingScore(CurrentMetricValues, MetricWeightSheet)
+        Satisfaction := (Floor(CurrentScore / 10) - 1) or 0
         Print("Satifaction: {Satisfaction}")
         CurrentSatisfactionVFX.Disable()
         set CurrentSatisfactionVFX = CustomerSatisfactionVFXDevices[Satisfaction] or CurrentSatisfactionVFX
         Sleep(0.1)
         CurrentSatisfactionVFX.Restart()
+
     # Unlock Methods
     UnlockColor<public>(ID : int) : void =
         if ( not UnlockedColorIDs.Find[ID]):
@@ -290,22 +357,27 @@ pumpkin_carving_manager<public> := class<concrete>:
             UnlockedTopIDs := UnlockedTopIDs
             UnlockedEyeIDs := UnlockedEyeIDs
             UnlockedMouthIDs := UnlockedMouthIDs
+
     Reset<public>() : void =
+        if ( Owner := MaybeOwner?) then Owner.GetCanvas().RemoveWidget(ScoreWidget.GetRootWidget())
+        set MaybeOwner = false
         set UnlockedColorIDs = array{}
         set UnlockedTopIDs = array{}
         set UnlockedEyeIDs = array{}
         set UnlockedMouthIDs = array{}
         set SelectedColorID = 0
-        set SelectedTopID = 0
-        set SelectedEyesID = 0
-        set SelectedMouthID = 0 
+        set SelectedTopID = -1
+        set SelectedEyesID = -1
+        set SelectedMouthID = 0-1
+        
         for ( Device : CustomerCharacterDevices) do Device.Hide()
         for ( Decal : EyeDecals) do Decal.Hide()
         for ( Decal : MouthDecals) do Decal.Hide()
+        ScoreWidget.Hide()
         PumpkinBase.Hide()
         PumpkinTop.Hide()
         ResetEvent.Signal()
-      
+
 pumpkin_carving_ui := class:
     Canvas : canvas = canvas{}
     ColorPageButton : button_quiet = button_quiet{}
@@ -330,15 +402,17 @@ pumpkin_carving_ui := class:
         Canvas.AddWidget(canvas_slot{Widget := RootWidget})
 
     Init() : void =
-        {}
+        set CurrentComponentPageIndex = 0
 
     Display(Owner : custom_player) : void =
         if ( PlayerUI := GetPlayerUI[Owner.Player]):
+            RootWidget.SetVisibility(widget_visibility.Visible)
             PlayerUI.AddWidget(Canvas, player_ui_slot{InputMode := ui_input_mode.All})
 
     Remove(Owner : custom_player) : void =
         if ( PlayerUI := GetPlayerUI[Owner.Player]):
             PlayerUI.RemoveWidget(Canvas)
+            RootWidget.SetVisibility(widget_visibility.Hidden)
 
     UpdateComponentPage(PumpkinCarvingManager : pumpkin_carving_manager, PageIndex : int) : void =
         set CurrentComponentPageIndex = PageIndex
@@ -401,6 +475,7 @@ pumpkin_carving_ui := class:
                     Widget := stack_box:
                         Orientation := orientation.Vertical
                         Slots := NavigationMenuStackBoxSlots
+
                 overlay_slot: <# Main Stack Box #>
                     HorizontalAlignment := horizontal_alignment.Left
                     VerticalAlignment := vertical_alignment.Top
@@ -468,12 +543,19 @@ pumpkin_carving_component_widget := class:
     Hide<public>() : void = RootWidget.SetVisibility(widget_visibility.Hidden)
     GetRootWidget()<transacts> : widget = RootWidget
 
-pumpkin_carving_score_screen_ui := class:
-    ResetEvent : event() = event(){}
-    var RootWidget : widget = overlay{}
+pumpkin_carving_tutorial_settings<public> := class<concrete>:
+    @editable       ShopHud : hud_message_device = hud_message_device{}
+    @editable       ShopCinematic : cinematic_sequence_device = cinematic_sequence_device{}
+    @editable       DecorateHud : hud_message_device = hud_message_device{}
+    @editable       CustomerHud : hud_message_device = hud_message_device{}
 
-    UniqueBegin() : void =
-        {}
+    QueueDisplayCustomerTutorial(CustomPlayer : custom_player)<suspends> : void =
+        Sleep(5.0)
+        CustomerHud.Show(CustomPlayer.Player)
+
+    QueueDisplayShopTutorial(CustomPlayer : custom_player)<suspends> : void =
+        ShopCinematic.Play(CustomPlayer.Player)
+        ShopHud.Show(CustomPlayer.Player)
 
 using { PumpkinStuff.PumpkinMaterials}
 PumpkinTopMeshes<public> : []mesh = array:
@@ -509,14 +591,14 @@ PumpkinMaterialComponents<public> : []material = array:
     M_Pumpkin_Material_Gas
     MI_Pumpkin_Material_Galaxy
     MI_Pumpkin_Material_Gas_Pink
-    M_Pumpkin_RGB
+    M_Pumpkin_Material_RGB
     M_Pumpkin_Material_Crystal
 
 using { UIStuff.PumpkinCarvingUI.PumpkinMaterials }
 PumpkinMaterialComponentImages<public> : []texture = array:
     T_Pumpkin_Material_Orange
-    T_Pumpkin_Material_White
     T_Pumpkin_Material_Black
+    T_Pumpkin_Material_White
     T_Pumpkin_Material_Noise_Red
     T_Pumpkin_Material_Iridescent_Orange
     T_Pumpkin_Material_Iridescent_Green

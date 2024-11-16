@@ -38,16 +38,18 @@ global_boss_manager<public> := class(creative_device):
     var CustomPlayerBossHPWidgetMap<public> : [custom_player]boss_hp_widget = map{}
     var CurrencyManager<public> : currency_manager = currency_manager{}
     var PlayerManager<public> : player_manager = player_manager{}
+    var UIManager<public> : user_interface_manager = user_interface_manager{}
     var IsBossFightActive<public> : logic = false
 
     var MaybeCurrentBossManager : ?boss_manager = false
 
     var BossManagers : []boss_manager = array{}
     
-    Init<public>(InCurrencyManager : currency_manager, InPlayerManager : player_manager) : void =
+    Init<public>(InCurrencyManager : currency_manager, InPlayerManager : player_manager, InUIManager : user_interface_manager) : void =
         Print("Init boss manager!")
         set CurrencyManager = InCurrencyManager
         set PlayerManager = InPlayerManager
+        set UIManager = InUIManager
         if ( RedSpiritManager := RedSpiritBossManager?) then set BossManagers = BossManagers + array{RedSpiritManager}
         for ( Manager : BossManagers) do Manager.Init(Self)
         BossFightPlayerManager.Init(Self)
@@ -102,7 +104,8 @@ global_boss_manager<public> := class(creative_device):
                 loop: <# Await damage event #>
                     BossFortCharacter.DamagedEvent().Await()
                     for ( CustomPlayer : BossFightPlayerManager.GetActiveCustomPlayers(), Widget := CustomPlayerBossHPWidgetMap[CustomPlayer]):
-                        <# Earn money ??? #>
+                        
+                        CurrencyManager.IncreaseCurrency(CustomPlayer, currency_transaction{Amount := Ceil[CustomPlayer.Candy * 0.01 * CustomPlayer.CurrencyMultiplier] or 5, Type := currency_type.Cash })
                         Widget.SetProgress(BossFortCharacter.GetHealth() / BossManager.GetMaxBossHealth())
                         Widget.SetHPText("{Ceil[BossFortCharacter.GetHealth()] or 1}/{Ceil[BossManager.GetMaxBossHealth()] or 1}")
 
@@ -121,10 +124,21 @@ global_boss_manager<public> := class(creative_device):
             OverworldTeleporter.Teleport(CustomPlayer.Agent)
             HandleCustomPlayerLeavesBossFight(CustomPlayer)
         if ( BossFightEndResult.WasDefeated?):
+            XPGain := 10000
+            
             <# Give bonus rewards if boss fight was defeated #>
             for ( CustomPlayer : ActiveCustomPlayers):
+                CashGain := currency_transaction{Amount := CustomPlayer.Candy, Type := currency_type.Cash}
+                CurrencyManager.IncreaseCurrency(CustomPlayer, CashGain)
+                UIManager.DisplayIncomeGain(CustomPlayer, CashGain, ?AdditionalText := " Boss Defeated!", ?TextColor := MakeColorFromHex("D02000FF"))
+                CustomPlayer.TycoonLevel.GrantXP(XPGain)
                 DefeatAccolades.Award(CustomPlayer.Agent)
+            Sleep(1.0)
             if (CustomDefeator := PlayerManager.GetCustomPlayerFromFortCharacter[BossFightEndResult.DefeatingFortCharacter?]):
+                CashGain := currency_transaction{Amount := CustomDefeator.Candy, Type := currency_type.Cash}
+                CurrencyManager.IncreaseCurrency(CustomDefeator, CashGain)
+                UIManager.DisplayIncomeGain(CustomDefeator, CashGain, ?AdditionalText := " Boss Elimination Bonus!", ?TextColor := MakeColorFromHex("FEF000FF"))
+                CustomDefeator.TycoonLevel.GrantXP(5000)
                 <# Give extra stuff to defeator #>
         else:
             <# Boss fight time ran out! #>

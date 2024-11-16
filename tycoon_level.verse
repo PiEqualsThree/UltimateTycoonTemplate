@@ -30,9 +30,10 @@ tycoon_level<public> := class:
     var PlayerStatsManager : player_stats_manager = player_stats_manager{}
     
     var MaybeOwner : ?custom_player = false
-    UniqueBegin<public>(TycoonLevelSettings : tycoon_level_settings) : void =
+    UniqueBegin<public>(Owner : custom_player, TycoonLevelSettings : tycoon_level_settings) : void =
         set Settings = TycoonLevelSettings
-        UI.UniqueBegin(Settings.AnimationHud, Settings.XPGrantedAudio, Settings.LevelUpAudio)
+        UI.UniqueBegin(Owner, Settings.AnimationHud, Settings.XPGrantedAudio, Settings.LevelUpAudio)
+
 
     Init<public>(Owner : custom_player, PlayerStats : player_stats) : void =
         Stats := PlayerStats.LevelStats
@@ -42,10 +43,7 @@ tycoon_level<public> := class:
         set TotalXP = Stats.TotalXP
         set NextLevelXPRequired = GetXPRequired(CurrentLevel + 1)
         # if ( Stats.Season <> Season): <# If new season, reset stats lol #>
-
-        
         UI.Init(Owner, CurrentLevel, CurrentLevelXP, GetXPRequired(CurrentLevel + 1))
-        Owner.GetCanvas().AddWidget(UI.GetCanvasSlot())
         spawn { Update(Owner) }
 
     Update(Owner : custom_player)<suspends> : void =
@@ -108,9 +106,6 @@ tycoon_level<public> := class:
 
             UI.PollAnimation(tycoon_level_animation{ XPGainAnimation := option{XPGainAnimation}})
 
-    ShowUI<public>() : void = UI.GetRootWidget().SetVisibility(widget_visibility.Visible)
-    HideUI<public>() : void = UI.GetRootWidget().SetVisibility(widget_visibility.Hidden)
-    
     Reset() : void =
         ResetEvent.Signal()
         UI.Reset()
@@ -244,7 +239,7 @@ tycoon_level_ui := class:
     #     AnimationHud.SetText(StringToMessage("+{XPGain} XP!"))
     #     AnimationHud.Show(Owner.Player, ?DisplayTime := Time)
 
-    UniqueBegin(InHudDevice : hud_message_device, XPGainAudioPlayer : audio_player_device, LevelUpAudioDevice : audio_player_device) : void =
+    UniqueBegin(Owner : custom_player, InHudDevice : hud_message_device, XPGainAudioPlayer : audio_player_device, LevelUpAudioDevice : audio_player_device) : void =
         TextBlockXP.SetTextColor(TextColor)
         TextBlockLevel.SetTextColor(TextColor)
         ColorBlockLevelUp.SetColor(LevelUpColor)
@@ -293,9 +288,18 @@ tycoon_level_ui := class:
                                 VerticalAlignment := vertical_alignment.Center
                                 Padding := margin{ Right := 20.0}
                                 Widget := TextBlockXP
+        RootWidget.SetVisibility(widget_visibility.Hidden)
+        Owner.GetCanvas().AddWidget(
+            canvas_slot:
+                Widget := RootWidget
+                Anchors := anchors{Minimum := vector2{ X := 0.5, Y := 1.0}, Maximum := vector2{ X := 0.5, Y := 1.0}}
+                Alignment := vector2{ X := 0.5, Y := 1.0}
+                Offsets := margin{Left := 75.0, Top := -50.0}
+        )
 
     Init(Owner : custom_player, CurrentLevel : int, CurrentLevelXP : int, NextLevelXP : int ) : void = 
         set MaybeOwner = option{Owner}
+        RootWidget.SetVisibility(widget_visibility.Visible)
         Percent := (1.0 * CurrentLevelXP) / Max((1.0 * NextLevelXP), 1.0)
         TextBlockLevel.SetText(StringToMessage("Lv {CurrentLevel}"))
         TextBlockXP.SetText(StringToMessage("XP: {CurrentLevelXP}/{NextLevelXP}"))
@@ -304,17 +308,13 @@ tycoon_level_ui := class:
         spawn{ Update() }
         
     Reset() : void =
+        set MaybeOwner = false
+        RootWidget.SetVisibility(widget_visibility.Hidden)
         UIResetEvent.Signal()
         AnimationQueue.Reset()
         ColorBlockProgress.SetDesiredSize(vector2{X := 0.0, Y := ProgressBarHeight})
 
     GetRootWidget()<transacts> : widget = RootWidget
-    GetCanvasSlot()<transacts> : canvas_slot = 
-        canvas_slot:
-            Widget := RootWidget
-            Anchors := anchors{Minimum := vector2{ X := 0.5, Y := 1.0}, Maximum := vector2{ X := 0.5, Y := 1.0}}
-            Alignment := vector2{ X := 0.5, Y := 1.0}
-            Offsets := margin{Left := 75.0, Top := -50.0}
 
 tycoon_level_settings<public> := class<concrete>:
     AnimationHudToolTip<localizes> : message = "Hud Device used to singal xp grants and level up text"

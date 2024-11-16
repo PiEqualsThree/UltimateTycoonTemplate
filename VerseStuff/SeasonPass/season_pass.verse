@@ -85,11 +85,11 @@ season_pass<public> := class<concrete>:
             if ( FreeReward := MaybeFreeRewards[I - 1]?) then FreeReward.Unlock()
             if ( PremiumReward := MaybePremiumRewards[I - 1]?) then PremiumReward.Unlock()
             Sleep(0.0)
-        for ( ID : SeasonPassStats.ClaimedFreeRewardIDs, Reward := MaybeFreeRewards[ID]?):
+        for ( ID : SeasonPassStats.ClaimedFreeRewardIDs, Reward := MaybeFreeRewards[ID]?, not Reward.BlingBucksReward?):
             Reward.Claim(Owner, TycoonManager, Self)
             if ( Mod[ID, 7] = 0) then Sleep(0.0)
             
-        for ( ID : SeasonPassStats.ClaimedPremiumRewardIDs, Reward := MaybePremiumRewards[ID]?):
+        for ( ID : SeasonPassStats.ClaimedPremiumRewardIDs, Reward := MaybePremiumRewards[ID]?, not Reward.BlingBucksReward?):
             Reward.Claim(Owner, TycoonManager, Self)
             if ( Mod[ID, 7] = 0) then Sleep(0.0)
 

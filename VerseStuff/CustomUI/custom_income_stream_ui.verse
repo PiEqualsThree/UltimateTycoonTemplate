@@ -11,10 +11,6 @@ using { /UnrealEngine.com/Temporary/Diagnostics }
 using { /UnrealEngine.com/Temporary/UI }
 using { UIStuff }
 
-clamped_float := type {_X:float where 0.000000 <= _X, _X <= 1.000000}
-custom_income_stream_ui := class:
-
-
 custom_income_widget<public> := class:
     TextBlock<public> : text_block = text_block{DefaultTextColor := NamedColors.White, DefaultShadowOffset := option{vector2{ X := 3.0, Y := 3.0}}, DefaultShadowOpacity := 1.0}
     TextureBlock<public> : texture_block = texture_block{DefaultImage := T_Place_Holder}
@@ -41,10 +37,10 @@ custom_income_widget<public> := class:
                             stack_box_slot:
                                 Widget := TextBlock
                 
-    SetWidgetImage(Image : texture) : void = TextureBlock.SetImage(Image)
-    SetWidgetText(Text : string) : void = TextBlock.SetText(StringToMessage(Text))
+    SetWidgetImage<public>(Image : texture) : void = TextureBlock.SetImage(Image)
+    SetWidgetText<public>(Text : string) : void = TextBlock.SetText(StringToMessage(Text))
 
-    Move(DeltaY : float, StartingTextureBlockSize : vector2, Amount : int)<suspends> : void =  
+    Move<public>(DeltaY : float, StartingTextureBlockSize : vector2, Amount : int)<suspends> : void =  
         Target := vector2{ X := 0.0, Y := 0.0}
         Start := vector2{ X := 0.0, Y := DeltaY}
         Intervals := 45

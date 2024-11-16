@@ -18,7 +18,7 @@ reward_bling_bucks_component := class<concrete>(reward_component):
         {}
     
     Claim<override>(Owner : custom_player, TycoonManager : tycoon_manager, Pass : season_pass) : void =
-        Owner.SetBlingBucks(Owner.BlingBucks + Amount)
+        TycoonManager.CurrencyManager.IncreaseCurrency(Owner, currency_transaction{Amount := Amount, Type := currency_type.BlingBucks})
 
     Reset<override>() : void =
         {}

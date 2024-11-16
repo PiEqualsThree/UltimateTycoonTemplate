@@ -29,7 +29,7 @@ red_spirit_idle_state<public> := class(red_spirit_boss_state):
         if ( BossFortCharacter := RedSpiritBossManager.NPCBehavior.GetAgent[].GetFortCharacter[]):
             set NextState = Self
             set IdleTime = BossFortCharacter.GetHealth() <= BossFortCharacter.GetMaxHealth() * 0.5 and 0.3 or 1.0
-            Print("Idling. . . ")
+            #Print("Idling. . . ")
 
     Update<override>(RedSpiritBossManager : red_spirit_boss_manager)<suspends> : void =
         race:
@@ -52,7 +52,7 @@ red_spirit_idle_state<public> := class(red_spirit_boss_state):
                 4 => set NextState = RedSpiritBossManager.LavaWallAttackState
                 _ => set NextState = Self
         else:
-            Print("next state idle because no playres found!")
+            #Print("next state idle because no playres found!")
         End(RedSpiritBossManager)
 
     End<override>(RedSpiritBossManager : red_spirit_boss_manager) : void =

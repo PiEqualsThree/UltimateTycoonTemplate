@@ -10,6 +10,7 @@ using { VerseStuff.Managers}
 
 upgradable_currency_collector<public> := class<concrete>(tycoon_building, upgradable, resetable):
     @editable       ID : int = 0
+    @editable       UpgradeBuildingIDRequired : int = 200
     @editable       Billboard : billboard_device = billboard_device{}
     @editable       CollectionTrigger : trigger_device = trigger_device{}
     @editable       CollectionAudio : audio_player_device = audio_player_device{}
@@ -102,15 +103,13 @@ upgradable_currency_collector<public> := class<concrete>(tycoon_building, upgrad
                     set StoredCash = 0
 
     AwaitUpgradeUnlock(Owner : custom_player)<suspends> : void =
-        race:
-            ResetEvent().Await()
-            block:
-                Sleep(1.0)
-                if ( CurrentLevel = 2) then return
-                Sleep(15.0)
-                if ( CurrentLevel = 2) then return
-                else:
-                    AutoCollectBuilding.Unlock(Owner)
+        if ( TycoonManager := Owner.MaybeTycoonManager?):
+            race:
+                ResetEvent().Await()
+                loop:
+                    PurchaseResult := TycoonManager.TycoonBuildingPurchasedEvent.Await()
+                    if ( PurchaseResult.TycoonBuildingID = UpgradeBuildingIDRequired):
+                        AutoCollectBuilding.Unlock(Owner)
 
 
     AddPassiveIncome<public>(Owner : custom_player, CurrencyManager : currency_manager, IncomeGain : passive_income) : void =

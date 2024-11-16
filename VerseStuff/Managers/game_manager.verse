@@ -16,11 +16,14 @@ game_manager<public> := class(creative_device):
     @editable       DefaultBlueprintAsset : creative_prop_asset = DefaultCreativePropAsset
     @editable       TycoonLevelSettings : tycoon_level_settings = tycoon_level_settings{}
     @editable       CollabSettings<public> : collab_settings = collab_settings{}
+    @editable       SecretCollectibleSettings<public> : secret_collectible_settings = secret_collectible_settings{}
     @editable       BossManager : global_boss_manager = global_boss_manager{}
     @editable       ZombieManager : global_zombie_manager = global_zombie_manager{}
     @editable       CosmeticShop : global_cosmetic_shop = global_cosmetic_shop{}
+    @editable       VaultManager : global_vault_manager = global_vault_manager{}
+    @editable       VIPManager : global_vip_manager = global_vip_manager{}
     
-    #ScoreboardManager : scoreboard_manager = scoreboard_manager{}
+    ScoreboardManager : scoreboard_manager = scoreboard_manager{}
     CurrencyManager : currency_manager = currency_manager{}
     PlayerStatsManager : player_stats_manager = player_stats_manager{}
 
@@ -29,12 +32,15 @@ game_manager<public> := class(creative_device):
         PlayerManager.Init(GetPlayspace())
         UIManager.Init(PlayerManager)
         CurrencyManager.Init(UIManager)
+        VIPManager.Init(PlayerManager)
         MazeManager.Init(CurrencyManager, UIManager)
-        BossManager.Init(CurrencyManager, PlayerManager)
+        BossManager.Init(CurrencyManager, PlayerManager, UIManager)
         CosmeticShop.Init(PlayerManager, CurrencyManager)
-     #   ScoreboardManager.Init(PlayerManager)
+        ScoreboardManager.Init(PlayerManager)
         ZombieManager.Init(PlayerManager, CurrencyManager, UIManager)
-     #   VIPManager.Init(PlayerManager)
+        ScoreboardManager.Init(PlayerManager)
+        VaultManager.Init(PlayerManager)
+        VIPManager.Init(PlayerManager)
         for ( CustomPlayer : PlayerManager.GetCustomPlayers()) do spawn { PollInitNewPlayer(CustomPlayer)}
         for ( TycoonManager : TycoonManagers) do spawn{  BeginTycoonManager(TycoonManager) }
         spawn{ Update()}
@@ -56,3 +62,4 @@ game_manager<public> := class(creative_device):
                 
     PollInitNewPlayer(CustomPlayer : custom_player)<suspends> : void =
         CustomPlayer.UniqueBegin(TycoonLevelSettings)
+

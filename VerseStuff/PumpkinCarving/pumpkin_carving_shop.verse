@@ -20,16 +20,20 @@ using { UIStuff}
 using { UIStuff.PumpkinCarvingUI}
 using { UIStuff.PumpkinCarvingUI.PumpkinEyes}
 using { UIStuff.PumpkinCarvingUI.PumpkinMouths}
+using { PumpkinStuff.PumpkinMaterials }
 
-pumpkin_carving_components_shop<public> := class<concrete>:
+pumpkin_carving_shop<public> := class<concrete>:
     @editable       Button : button_device = button_device{}
     @editable       ShopContainer : creative_prop = creative_prop{}
+    @editable       PurchaseSuccessAudio : audio_player_device = audio_player_device{}
+    @editable       PurchaseErrorAudio : audio_player_device = audio_player_device{}
     @editable       PreviewCamera : gameplay_camera_fixed_point_device = gameplay_camera_fixed_point_device{}
     @editable       PumpkinTopProp : creative_prop = creative_prop{}
     @editable       PumpkinBaseProp : creative_prop = creative_prop{}
 
     ResetEvent : event() = event(){}
     ShopUI : pumpkin_carving_shop_ui = pumpkin_carving_shop_ui{}
+    ComponentSwitchThrottleTime : float = 0.25
 
     var AvailableMaterialIDs : []int = array{}
     var AvailableTopIDs : []int = array{}
@@ -77,6 +81,7 @@ pumpkin_carving_components_shop<public> := class<concrete>:
         loop:
             Agent := Button.InteractedWithEvent.Await()
             if ( Owner.Agent = Agent):
+                set ThrottleComponentChange = false
                 UpdateAvailableMaterials(PumpkinCarvingManager)
                 UpdateAvailableTops(PumpkinCarvingManager)
                 UpdateAvailableMouths(PumpkinCarvingManager)
@@ -90,6 +95,7 @@ pumpkin_carving_components_shop<public> := class<concrete>:
 
     PollUIEvents(Owner : custom_player, PumpkinCarvingManager : pumpkin_carving_manager)<suspends> : void=
         race:
+            ResetEvent.Await()
             Owner.FortCharacter.EliminatedEvent().Await()
             ShopUI.FinishButton.OnClick().Await()
             AwaitAndResolvePurchaseButtonPress(Owner, PumpkinCarvingManager)
@@ -127,7 +133,7 @@ pumpkin_carving_components_shop<public> := class<concrete>:
                     2 => UpdateEyesComponent(PumpkinCarvingManager, AvailableEyeIDs[ComponentIndex] or -1)
                     3 => UpdateMouthComponent(PumpkinCarvingManager, AvailableMouthIDs[ComponentIndex] or -1)
                     _ => Print("Unkown Component Page")
-                Sleep(0.5)
+                Sleep(ComponentSwitchThrottleTime)
                 set ThrottleComponentChange = false
 
     AwaitAndResolvePageButtonPress(Owner : custom_player, PumpkinCarvingManager : pumpkin_carving_manager, PageIndex : int)<suspends> : void =
@@ -151,18 +157,30 @@ pumpkin_carving_components_shop<public> := class<concrete>:
             CurrencyManager := TycoonManager.CurrencyManager
             loop:
                 ShopUI.PurchaseButton.OnClick().Await()
-                Price := GetComponentPrice(CurrentComponentIndex)
+                ComponentID := case(CurrentComponentPage):
+                    0 => AvailableMaterialIDs[CurrentComponentIndex] or -1
+                    1 => AvailableTopIDs[CurrentComponentIndex] or -1
+                    2 => AvailableEyeIDs[CurrentComponentIndex] or -1
+                    3 => AvailableMouthIDs[CurrentComponentIndex] or -1
+                    _ => -1
+                Price := GetComponentPrice(CurrentComponentPage, ComponentID)
                 Transaction := currency_transaction{Amount := Price, Type := currency_type.BlingBucks}
-                if ( CurrencyManager.ValidatePurchase[Owner, Transaction]):
-                    <# TODO : Remove bling bucks #>
+                if ( Price > -1, CurrencyManager.ValidatePurchase[Owner, Transaction]):
+                    CurrencyManager.DecreaseCurrency(Owner, Transaction)
+                    PurchaseSuccessAudio.Play(Owner.Player)
                     case (CurrentComponentPage):
                         0 => PumpkinCarvingManager.UnlockColor(AvailableMaterialIDs[CurrentComponentIndex] or -1)
                         1 => PumpkinCarvingManager.UnlockTop(AvailableTopIDs[CurrentComponentIndex] or - 1)
                         2 => PumpkinCarvingManager.UnlockEyes(AvailableEyeIDs[CurrentComponentIndex] or -1)
                         3 => PumpkinCarvingManager.UnlockMouth(AvailableMouthIDs[CurrentComponentIndex] or -1)
                         _ => Print("Unkown component page index!")
-                    # PumpkinCarvingManager.
+                    Sleep(1.0)
+                    break
+                        
+                else:
+                    PurchaseErrorAudio.Play(Owner.Player)
 
+    
     RefreshComponentWidgets() : void =
         ComponentIDs := case(CurrentComponentPage):
             0 => AvailableMaterialIDs
@@ -170,7 +188,6 @@ pumpkin_carving_components_shop<public> := class<concrete>:
             2 => AvailableEyeIDs
             3 => AvailableMouthIDs
             _ => array{}
-        # for ( Index->ID : ComponentIDs, Widget := ShopUI.)
 
     UpdateAvailableMaterials(PumpkinCarvingManager : pumpkin_carving_manager) : void =
         var NewArray : []int = array{}
@@ -197,6 +214,8 @@ pumpkin_carving_components_shop<public> := class<concrete>:
         set AvailableMouthIDs = NewArray
 
     UpdateColorComponent(PumpkinManager : pumpkin_carving_manager, ComponentIndex : int) : void =
+        if ( EyeDecal := CurrentEyeDecal?) then EyeDecal.Hide()
+        if ( MouthDecal := CurrentMouthDecal?) then MouthDecal.Hide()
         if ( Material := PumpkinMaterialComponents[ComponentIndex]):
             PumpkinTopProp.Hide()
             PumpkinBaseProp.Show()
@@ -205,6 +224,9 @@ pumpkin_carving_components_shop<public> := class<concrete>:
             PumpkinBaseProp.Hide()
 
     UpdateTopComponent(PumpkinManager : pumpkin_carving_manager, ComponentIndex : int) : void =
+        PumpkinBaseProp.SetMaterial(MI_Pumpkin_Basic_Orange)
+        if ( EyeDecal := CurrentEyeDecal?) then EyeDecal.Hide()
+        if ( MouthDecal := CurrentMouthDecal?) then MouthDecal.Hide()
         if ( Mesh := PumpkinTopMeshes[ComponentIndex]):
             Print("Setting mesh {ComponentIndex}!")
             PumpkinBaseProp.Hide()
@@ -216,9 +238,10 @@ pumpkin_carving_components_shop<public> := class<concrete>:
     UpdateEyesComponent(PumpkinManager : pumpkin_carving_manager, ComponentIndex : int) : void =
         PumpkinTopProp.Hide()
         PumpkinBaseProp.Show()
+        PumpkinBaseProp.SetMaterial(MI_Pumpkin_Basic_Orange)
         if ( EyeDecal := CurrentEyeDecal?) then EyeDecal.Hide()
         if ( MouthDecal := CurrentMouthDecal?) then MouthDecal.Hide()
-        if ( Decal := PumpkinManager.EyeDecals[ComponentIndex], Decal.TeleportTo[PumpkinBaseProp.GetTransform()]):
+        if ( Decal := PumpkinManager.EyeDecals[ComponentIndex], Decal.TeleportTo[PumpkinBaseProp.GetTransform().Translation + vector3{ Z := 25.0}, PumpkinBaseProp.GetTransform().Rotation]):
             set CurrentEyeDecal = option{Decal}
             Decal.Show()
         else:
@@ -227,24 +250,24 @@ pumpkin_carving_components_shop<public> := class<concrete>:
     UpdateMouthComponent(PumpkinManager : pumpkin_carving_manager, ComponentIndex : int) : void =
         PumpkinTopProp.Hide()
         PumpkinBaseProp.Show()
+        PumpkinBaseProp.SetMaterial(MI_Pumpkin_Basic_Orange)
         if ( EyeDecal := CurrentEyeDecal?) then EyeDecal.Hide()
         if ( MouthDecal := CurrentMouthDecal?) then MouthDecal.Hide()
-        if ( Decal := PumpkinManager.MouthDecals[ComponentIndex], Decal.TeleportTo[PumpkinBaseProp.GetTransform()]):
+        if ( Decal := PumpkinManager.MouthDecals[ComponentIndex], Decal.TeleportTo[PumpkinBaseProp.GetTransform().Translation + vector3{Z := 25.0}, PumpkinBaseProp.GetTransform().Rotation]):
             set CurrentMouthDecal = option{Decal}
             Decal.Show()
         else:
             Print("No mouth decals to show")
 
-    GetComponentPrice(ComponentIndex : int) : int = 
-        if ( Group := Ceil((ComponentIndex + 1) / 4)):
-            case(Group):
-                2 => 5
-                3 => 10
-                4 => 20
-                _ => 5
-        else:
-            return 10
-
+    # Type Index: 0 = Material, 1 = Top, 2 = Eye, 3 = Mouth
+    GetComponentPrice(ComponentTypeIndex : int, ComponentID : int) : int = 
+        case(ComponentTypeIndex):
+            0 => PumpkinMaterialPrices[ComponentID] or -1
+            1 => PumpkinTopPrices[ComponentID] or -1
+            2 => PumpkinEyePrices[ComponentID] or -1
+            3 => PumpkinMouthPrices[ComponentID] or -1
+            _ => -1
+        
     Reset() : void =
         set AllowComponentChange = true
         ResetEvent.Signal()
@@ -283,7 +306,7 @@ pumpkin_carving_shop_ui := class:
         if ( PlayerUI := GetPlayerUI[Owner.Player]):
             PlayerUI.RemoveWidget(Canvas)
 
-    UpdateComponentPage(PumpkinCarvingShopManager : pumpkin_carving_components_shop, PageIndex : int) : void =
+    UpdateComponentPage(PumpkinCarvingShopManager : pumpkin_carving_shop, PageIndex : int) : void =
         var UnlockedComponentIndices : []int = array{}
         var ImagesArray : []texture = array{}
         case(PageIndex):
@@ -308,7 +331,7 @@ pumpkin_carving_shop_ui := class:
         for ( Index -> ID : UnlockedComponentIndices, Image := ImagesArray[ID], ComponentWidget := ComponentWidgets[Index]):
             ComponentWidget.SetImage(Image)
             ComponentWidget.Show()
-            ComponentWidget.SetPrice(PumpkinCarvingShopManager.GetComponentPrice(ID))
+            ComponentWidget.SetPrice(PumpkinCarvingShopManager.GetComponentPrice(PageIndex, ID))
         for ( I := UnlockedComponentIndices.Length..15, Widget := ComponentWidgets[I]) do Widget.Hide()
 
     Reset() : void =
@@ -384,6 +407,9 @@ pumpkin_carving_shop_ui := class:
                                 Widget := texture_block{DefaultImage := T_Pumpkin_Shop_Buy_Button, DefaultDesiredSize := vector2{ X := 512.0, Y := 128.0}}
                             overlay_slot:
                                 Widget := PurchaseButton 
+                                Padding := margin{Top := 15.0, Bottom := 100.0}
+                                HorizontalAlignment := horizontal_alignment.Fill
+                                VerticalAlignment := vertical_alignment.Fill
 
                 overlay_slot: <# Finish Button #>
                     HorizontalAlignment := horizontal_alignment.Left
@@ -401,7 +427,7 @@ pumpkin_carving_shop_ui := class:
 pumpkin_carving_shop_component_slot_widget := class:
     PurchaseButton<public> : button_quiet = button_quiet{}
     ComponentTextureBlock : texture_block = texture_block{DefaultImage := T_Pumpkin_Eyes_1_1, DefaultDesiredSize := vector2{ X := 128.0, Y := 128.0}}
-    CurrencyTextureBlock : texture_block = texture_block{DefaultImage := T_Place_Holder, DefaultDesiredSize := vector2{ X := 32.0, Y := 32.0}}
+    CurrencyTextureBlock : texture_block = texture_block{DefaultImage := UIStuff.CurrencyUI.T_Bling_Bucks, DefaultDesiredSize := vector2{ X := 32.0, Y := 32.0}}
     PriceTextBlock : text_block = text_block{DefaultTextColor := MakeColorFromHex("FFFFFFFF")}
     var RootWidget : widget = overlay{}
 

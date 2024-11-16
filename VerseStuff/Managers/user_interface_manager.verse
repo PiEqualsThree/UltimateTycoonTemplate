@@ -11,7 +11,7 @@ using { /UnrealEngine.com/Temporary/Diagnostics }
 using { /UnrealEngine.com/Temporary/SpatialMath }
 using { /UnrealEngine.com/Temporary/UI }
 using { TycoonInterfaces }
-
+using { CustomUI }
 using { UIStuff }
 using { UIStuff.CurrencyUI }
 using { UIStuff.CosmeticsUI }
@@ -50,7 +50,7 @@ player_currency_widgets<public> := class(resetable):
 
     var RootWidget : widget = overlay{}
 
-    UniqueBegin<public>() : void =
+    UniqueBegin<public>(Owner : custom_player) : void =
         set RootWidget = stack_box:
             Orientation := orientation.Vertical
             Slots := array:
@@ -60,7 +60,7 @@ player_currency_widgets<public> := class(resetable):
                     Widget := overlay:
                         Slots := array:
                             overlay_slot:
-                                Widget := texture_block{DefaultImage := CurrencyUI.T_Currency_Cash, DefaultDesiredSize := vector2{X := 256.0, Y := 64.0}}
+                                Widget := texture_block{DefaultImage := CurrencyUI.T_Currency_Overlay_Cash, DefaultDesiredSize := vector2{X := 256.0, Y := 64.0}}
                             overlay_slot:
                                 Widget := CashTextBlock
                                 HorizontalAlignment := horizontal_alignment.Left
@@ -72,7 +72,7 @@ player_currency_widgets<public> := class(resetable):
                     Widget := overlay:
                         Slots := array:
                             overlay_slot:
-                                Widget := texture_block{DefaultImage := CurrencyUI.T_Currency_Candy, DefaultDesiredSize := vector2{X := 256.0, Y := 64.0}}
+                                Widget := texture_block{DefaultImage := CurrencyUI.T_Currency_Overlay_Candy, DefaultDesiredSize := vector2{X := 256.0, Y := 64.0}}
                             overlay_slot:
                                 Widget := SubscribersTextBlock
                                 HorizontalAlignment := horizontal_alignment.Left
@@ -85,7 +85,7 @@ player_currency_widgets<public> := class(resetable):
                     Widget := overlay:
                         Slots := array:
                             overlay_slot:
-                                Widget := texture_block{DefaultImage := CurrencyUI.BlingBucks, DefaultDesiredSize := vector2{X := 256.0, Y := 64.0}}
+                                Widget := texture_block{DefaultImage := CurrencyUI.T_Currency_Overlay_Bling_Bucks, DefaultDesiredSize := vector2{X := 256.0, Y := 64.0}}
                             overlay_slot:
                                 Widget := BlingBucksTextBlock
                                 HorizontalAlignment := horizontal_alignment.Left
@@ -112,8 +112,18 @@ player_currency_widgets<public> := class(resetable):
                                 Widget := CurrencyMultiplierTextureBlock
                             overlay_slot:
                                 Widget := CurrencyMultiplierTextBlock
+                                
+        RootWidget.SetVisibility(widget_visibility.Hidden)
+        Owner.GetCanvas().AddWidget(
+            canvas_slot:
+                Widget := RootWidget
+                Anchors := anchors{Minimum := vector2{ X := 0.0, Y := 0.5}, Maximum := vector2{ X := 0.0, Y := 0.5}}
+                Alignment := vector2{X := 0.0, Y := 0.0}
+                Offsets := margin{Left := 10.0, Top := -165.0}
+        )
 
     Init<public>(Owner : custom_player, PlayerStats : player_stats) : void =
+        RootWidget.SetVisibility(widget_visibility.Visible)
         CashTextBlock.SetText(StringToMessage("${FormatNumber(Owner.Cash)}"))
         SubscribersTextBlock.SetText(StringToMessage("{FormatNumber(Owner.Candy)}"))
         BlingBucksTextBlock.SetText(StringToMessage("{FormatNumber(Owner.BlingBucks)}"))
@@ -131,6 +141,7 @@ player_currency_widgets<public> := class(resetable):
             
 
     Reset<override>() : void =
+        RootWidget.SetVisibility(widget_visibility.Hidden)
         CashTextBlock.SetText(StringToMessage("$0"))
         SubscribersTextBlock.SetText(StringToMessage("0"))
         BlingBucksTextBlock.SetText(StringToMessage("0"))
@@ -169,7 +180,7 @@ player_income_stream_widgets<public> := class:
                                 Widget := TotalIncomeTextureBlock
                             stack_box_slot:
                                 Widget := TotalIncomeTextBlock
-
+                                
         set RootWidget = overlay:
             Slots := array:
                 overlay_slot:
@@ -178,7 +189,9 @@ player_income_stream_widgets<public> := class:
                     HorizontalAlignment := horizontal_alignment.Left
                     VerticalAlignment := vertical_alignment.Bottom
                     Padding := margin{Bottom := 150.0}
-                    Widget := TotalIncomeOverlay                     
+                    Widget := TotalIncomeOverlay   
+                    
+        # RootWidget.SetVisibility(widget_visibility.Hidden)
         Owner.GetCanvas().AddWidget(
             canvas_slot:
                 Widget := RootWidget

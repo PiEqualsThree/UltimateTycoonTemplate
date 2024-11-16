@@ -50,7 +50,6 @@ vehicle_manager<public> := class<concrete>:
     LoadData<public>(Owner : custom_player, CosmeticData : global_cosmetic_data, PlayerStats : player_stats) : void =
         for ( ID : PlayerStats.CosmeticStats.UnlockedVehicleIDs) do UnlockVehicle(Owner, ID)
         set MaybeOwner = option{Owner}
-        set EquippedVehicleID = UnlockedVehicleIDs[0] or -1
         spawn{Update(Owner, CosmeticData)}
 
     Update(Owner : custom_player, CosmeticData : global_cosmetic_data)<suspends> : void =

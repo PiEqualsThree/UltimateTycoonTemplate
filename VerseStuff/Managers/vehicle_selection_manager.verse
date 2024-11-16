@@ -41,13 +41,14 @@ vehicle_selection_manager<public> := class<concrete>:
     LoadData<public>(Owner : custom_player, VehicleManager : vehicle_manager, PlayerStats : player_stats)<suspends> : void =
         if ( GlobalCosmeticData := VehicleManager.MaybeCosmeticData?):
             EquipButton.Enable()
-            if ( VehiclePreviewProp.TeleportTo[DefaultPreviewVehiclePropTransform]) then VehiclePreviewProp.Show()
+            if ( VehiclePreviewProp.TeleportTo[DefaultPreviewVehiclePropTransform]) {}
             if ( StarterVehicleID := VehicleManager.UnlockedVehicleIDs[0], Vehicle := GlobalCosmeticData.VehicleCosmetics[StarterVehicleID]):
                 set CurrentVehicleArrayIndex = 0
                 set CurrentVehicleID = StarterVehicleID
                 UpdatePreview(Vehicle)
             else:
                 VehiclePreviewProp.SetMesh(ReturnVehicleMesh? or Cars.LancerEvo.SM_Vehicle_Lancer)
+                VehiclePreviewProp.Hide()
             spawn{ Update(Owner, VehicleManager, GlobalCosmeticData)}
         else:
             Print("Fatal Error: Vehicle Selection Manager cannot load data (Missing global cosmetic data)")
@@ -88,15 +89,16 @@ vehicle_selection_manager<public> := class<concrete>:
                 VehiclePreviewProp.MoveTo(DefaultPreviewVehiclePropTransform.Translation, VehiclePreviewProp.GetTransform().Rotation.ApplyYaw(1.95 * PiFloat), 5.0)
         
     UpdatePreview<public>( Vehicle : vehicle_cosmetic) : void =
+        VehiclePreviewProp.Show()
         # When vehicle being previewed is the same as the active vehicle
-        if ( Vehicle.ID = CurrentVehicleID, ReturnMesh := ReturnVehicleMesh?):
-            VehiclePreviewProp.SetMesh(ReturnMesh)
-        else:
-            Print("Updating preview {Vehicle.ID}")
-            VehiclePreviewProp.SetMesh(Vehicle.GetMesh())
-            EquipButton.SetInteractionText(StringToMessage("Equip {Vehicle.Name}"))
+        # if ( Vehicle.ID = CurrentVehicleID, ReturnMesh := ReturnVehicleMesh?):
+        #     VehiclePreviewProp.SetMesh(ReturnMesh)
+        # else:
         set CurrentVehicleID = Vehicle.ID
-
+        Print("Updating preview {Vehicle.ID}")
+        VehiclePreviewProp.SetMesh(Vehicle.GetMesh())
+        EquipButton.SetInteractionText(StringToMessage("Equip {Vehicle.Name}"))
+        
     Reset<public>() : void = 
         set CurrentVehicleID = -1
         VehiclePreviewProp.Hide()

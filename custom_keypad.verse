@@ -29,6 +29,7 @@ custom_keypad<public> := class:
     Init(InSuccessAudio : audio_player_device, InFailAudio : audio_player_device) : void =
         set CorrectCodeAudio = InSuccessAudio
         set IncorrectCodeAudio = InFailAudio
+        KeypadWidget.RootWidget.SetVisibility(widget_visibility.Hidden)
         KeypadWidget.SetText("")
 
     Reset<public>() : void =
@@ -43,11 +44,13 @@ custom_keypad<public> := class:
         KeypadWidget.SetText(CurrentCode)
         if ( PlayerUI := GetPlayerUI[CustomPlayer.Player]):
             PlayerUI.AddWidget(KeypadWidget.Canvas, player_ui_slot{InputMode := ui_input_mode.All})
+            KeypadWidget.RootWidget.SetVisibility(widget_visibility.Visible)
             spawn{ AwaitInput(CustomPlayer) }
 
     Remove<public>(CustomPlayer : custom_player) : void =
         if ( PlayerUI := GetPlayerUI[CustomPlayer.Player]):
             PlayerUI.RemoveWidget(KeypadWidget.Canvas)
+            KeypadWidget.RootWidget.SetVisibility(widget_visibility.Hidden)
 
     AwaitInput(CustomPlayer : custom_player)<suspends> : void =
         race:

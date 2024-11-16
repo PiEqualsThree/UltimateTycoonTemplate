@@ -7,6 +7,7 @@ using { /UnrealEngine.com/Temporary/SpatialMath }
 using { /UnrealEngine.com/Temporary/UI }
 using { VerseStuff.Managers }
 using { VerseStuff.Cosmetics }
+using { VerseStuff.CustomUI}
 using { UIStuff}
 
 custom_player<public> := class<unique>:
@@ -16,6 +17,7 @@ custom_player<public> := class<unique>:
     TycoonLevel<public> : tycoon_level = tycoon_level{}
     Canvas : canvas = canvas{}
     CurrencyWidgets : player_currency_widgets = player_currency_widgets{}
+    CosmeticUnlockWidget : player_cosmetic_unlock_widget = player_cosmetic_unlock_widget{}
     IncomeStreamWidgets : player_income_stream_widgets = player_income_stream_widgets{}
     
     var<private> Cash : int = 0
@@ -29,11 +31,13 @@ custom_player<public> := class<unique>:
         Print("Unique begin new custom player")
         if ( PlayerUI := GetPlayerUI[Player]) then PlayerUI.AddWidget(Canvas)
         Sleep(0.0)
-        TycoonLevel.UniqueBegin(TycoonLevelSettings)
+        TycoonLevel.UniqueBegin(Self, TycoonLevelSettings)
         Sleep(0.0)
-        CurrencyWidgets.UniqueBegin()
+        CurrencyWidgets.UniqueBegin(Self)
         Sleep(0.0)
         IncomeStreamWidgets.UniqueBegin(Self)
+        Sleep(0.0)
+        CosmeticUnlockWidget.UniqueBegin(Self)
         Sleep(0.0)
         Canvas.AddWidget(
             canvas_slot:
@@ -49,17 +53,7 @@ custom_player<public> := class<unique>:
         set Candy = Stats.CurrencyStats.Candy
         set Rebirths = Stats.CurrencyStats.Rebirths
         set BlingBucks = Stats.CurrencyStats.BlingBucks
-    
-        set CurrencyMultiplier = Min(1.0 + Rebirths * 0.2, 4.0)
-        
         CurrencyWidgets.Init(Self, Stats)
-        Canvas.AddWidget(
-            canvas_slot:
-                Widget := CurrencyWidgets.GetRootWidget()
-                Anchors := anchors{ Minimum := vector2{ X := 0.0, Y := 0.5}, Maximum := vector2{ X := 0.0, Y := 0.5}}
-                Alignment := vector2{ X := 0.0, Y := 0.0}
-                Offsets := margin{ Left := 10.0, Top := -150.0}
-        )
         TycoonLevel.Init(Self, Stats)
         
     Reset() : void =
@@ -70,18 +64,17 @@ custom_player<public> := class<unique>:
         set Rebirths = 0
         set MaybeTycoonManager = false
         TycoonLevel.Reset()
-        if ( PlayerUI := GetPlayerUI[Player]):
-            Canvas.RemoveWidget(CurrencyWidgets.GetRootWidget())
-            CurrencyWidgets.Reset()
+        CurrencyWidgets.Reset()
             
     SetCash(Amount : int) : void = set Cash = Amount
-    SetSubscribers(Amount : int) : void = set Candy = Amount
+    SetCandy(Amount : int) : void = set Candy = Amount
+    SetCurrencyMultiplier(Amount : float) : void = set CurrencyMultiplier = Amount
     SetBlingBucks(Amount : int) : void = set BlingBucks = Amount
     SetRebirths(Amount : int) : void = set Rebirths = Amount
   
     GetCanvas() : canvas = Canvas
     GetCash<public>()<transacts> : int = Cash
-    GetSubscribers<public>()<transacts> : int = Candy
+    GetCandy<public>()<transacts> : int = Candy
     GetBlingBucks<public>()<transacts> : int = BlingBucks
     GetCurrencyMultiplier<public>()<transacts> : float = CurrencyMultiplier
     GetCurrencyWidgets<public>()<transacts> : player_currency_widgets = CurrencyWidgets

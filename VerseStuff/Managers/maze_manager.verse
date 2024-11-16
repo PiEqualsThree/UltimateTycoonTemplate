@@ -106,7 +106,7 @@ maze_manager<public> := class(creative_device):
             
     PlayMazeMinigame(CustomPlayer : custom_player, TycoonManager : tycoon_manager, UI : maze_ui)<suspends> : maze_completion_result =
         BaseCandyFactor := CustomPlayer.Candy * 0.005
-        ZombieFactor := CustomPlayer.Candy * 0.0075
+        ZombieFactor := CustomPlayer.Candy * 0.0025
         Time := MazeTimeDeciseconds + GetRandomInt(10, 60)
         Timer := custom_timer{Mode := custom_timer_mode.Deciseconds}
         Timer.SetTime(Time)
@@ -124,12 +124,12 @@ maze_manager<public> := class(creative_device):
                     set CollectedCash = CollectedCash + 4 * CollectionResult.Size + (Ceil[BaseCandyFactor * Pow(1.35, 1.0 * CollectionResult.Size)] or 1)
                     set CollectedCandy = CollectedCandy + 2 *  CollectionResult.Size + (Ceil[BaseCandyFactor * Pow(1.25, 1.0 * CollectionResult.Size)] or 1)
                     UI.UpdateCurrencyText(CollectedCash, CollectedCandy)
-            loop:
-                Result := ZombieEliminatedEvent.Await()
-                if ( CustomPlayer.Agent = Result.Agent):
-                    set CollectedCash = CollectedCash + 8 + (Ceil[2 * ZombieFactor] or 1)
-                    set CollectedCandy = CollectedCandy + 4 + (Ceil[ZombieFactor] or 1)
-                    UI.UpdateCurrencyText(CollectedCash, CollectedCandy)
+            # loop:
+            #     Result := ZombieEliminatedEvent.Await()
+            #     if ( CustomPlayer.Agent = Result.Agent):
+            #         set CollectedCash = CollectedCash + 8 + (Ceil[2 * ZombieFactor] or 1)
+            #         set CollectedCandy = CollectedCandy + 4 + (Ceil[ZombieFactor] or 1)
+            #         UI.UpdateCurrencyText(CollectedCash, CollectedCandy)
             loop:
                 Agent := MazeExitButton.InteractedWithEvent.Await()
                 if ( CustomPlayer.Agent = Agent):

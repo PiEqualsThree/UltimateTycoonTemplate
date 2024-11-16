@@ -49,11 +49,11 @@ basic_tycoon_building<public> := class<concrete>(tycoon_building, purchasable, r
     Purchase<override>(Owner : custom_player, ?PlayAnimations : logic = true) : void = 
         if ( PurchaseStatus <> purchase_status.Purchased):
             set PurchaseStatus = purchase_status.Purchased   
-            spawn{ DoTycoonHideAnimation(PurchaseButton, DefaultPurchaseButtonTransform, ?PlayAnimations := PlayAnimations)}
-            spawn{ DoTycoonPopupAnimation(ContainerProp, DefaultContainerPropTransform, ?PlayAnimations := PlayAnimations)}
+            spawn{ DoTycoonHideAnimation(PurchaseButton, DefaultPurchaseButtonTransform, ?PlayAnimations := logic{PlayAnimations? and UseBuildAnimation?})}
+            spawn{ DoTycoonPopupAnimation(ContainerProp, DefaultContainerPropTransform, ?PlayAnimations := logic{PlayAnimations? and UseBuildAnimation?})}
             if ( PlayAnimations?):
-                <# TODO: Spawn VFX Here #>
                 if ( Cinematic := TycoonCinematic?) then spawn{ Cinematic.Play(Owner)}
+            
             BuildingPurchasedEvent.Signal()
 
     ResetEvent<override>() : event() = BuildingResetEvent

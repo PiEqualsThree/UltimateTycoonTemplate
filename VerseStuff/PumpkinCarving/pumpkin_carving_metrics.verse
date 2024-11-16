@@ -33,10 +33,10 @@ ToString<public>(Metric : pumpkin_carving_metric) : string =
 
 CalculatePumpkinCarvingScore<public>(ComponentMetricsTotal : [pumpkin_carving_metric]int, MetricWeightSheet : [pumpkin_carving_metric]int) : int = 
     var CurrentScore : int = 0
-    for ( Metric->Value : MetricWeightSheet):
-        Print("{Metric} Weight: {Value}")
+    for ( Metric->Weight : MetricWeightSheet):
+        Print("{Metric} Weight: {Weight}")
     for ( Metric->Value : ComponentMetricsTotal, Weight := MetricWeightSheet[Metric]):
-        MetricScore := (Floor[Value * Weight * 1.05] or Value * Weight)
+        MetricScore := (Floor[Value * (Pow(1.0 * Weight, 1.12) - 7.0)] or Value * Weight)
         set CurrentScore = CurrentScore + (Floor[32.5 * MetricScore / 700.0] or 10)
         Print("{Metric} Score: {MetricScore}")
     Print("Total Score: {CurrentScore}")
@@ -48,7 +48,7 @@ CalculatePumpkinCarvingScore<public>(ComponentMetricsTotal : [pumpkin_carving_me
 GenerateMetricWeightSheet<public>() : [pumpkin_carving_metric]int =
     TotalMetrics := 5
     Metrics := Shuffle(array{pumpkin_carving_metric.MetricA, pumpkin_carving_metric.MetricB, pumpkin_carving_metric.MetricC, pumpkin_carving_metric.MetricD, pumpkin_carving_metric.MetricE})
-    var TotalWeight : int = 100 - TotalMetrics
+    var TotalWeight : int = 95
     var StartingWeightSheet : [pumpkin_carving_metric]int = map:
         pumpkin_carving_metric.MetricA => 1
         pumpkin_carving_metric.MetricB => 1
@@ -73,8 +73,9 @@ PopulateWeights(CurrentWeightSheet : [pumpkin_carving_metric]int, Metrics : []pu
         else:
             set CurrentWeightTotal = CurrentWeightTotal - GeneratedWeight
             if ( set NewWeightMap[Metric] = Weight + GeneratedWeight) {}
-    if ( DeltaWeight := NewWeightMap[Metrics[0]] - GetRandomInt(-GetRandomInt(0, 2), GetRandomInt(3, 5)), set NewWeightMap[Metrics[0]] = DeltaWeight) {}
-    if ( DeltaWeight := NewWeightMap[Metrics[1]] - GetRandomInt(-GetRandomInt(0, 2), GetRandomInt(3, 5)), set NewWeightMap[Metrics[1]] = DeltaWeight) {}
+    # Populate first two metrics with negative weights, to add 
+    if ( UpdatedNegativeWeight := NewWeightMap[Metrics[1]] - (GetRandomInt(-3, GetRandomInt(1, 7)) > 0 or 0), set NewWeightMap[Metrics[1]] = Clamp(UpdatedNegativeWeight, -GetRandomInt(15, 30), -5)) {}
+    if ( UpdatedNegativeWeight := NewWeightMap[Metrics[0]] - (GetRandomInt(-3, GetRandomInt(1, 7)) > 0 or 0), set NewWeightMap[Metrics[0]] = Clamp(UpdatedNegativeWeight, -GetRandomInt(15, 30), -5)) {}
     
     return PopulateWeights(NewWeightMap, Metrics, CurrentWeightTotal)
     
