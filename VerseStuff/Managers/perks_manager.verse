@@ -229,7 +229,6 @@ perk_selection_widget := class:
                                 Widget := PerkDescriptionTextBlock
                 overlay_slot: <# Selection Button #>
                     VerticalAlignment := vertical_alignment.Bottom
-                    HorizontalAlignment := horizontal_alignment.Fill
                     Padding := margin{ Bottom := 15.0}
                     Widget := overlay:
                         Slots := array:
