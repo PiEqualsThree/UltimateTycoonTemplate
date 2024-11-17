@@ -53,6 +53,7 @@ aura_selection_manager<public> := class<concrete>:
         if ( StarterAuraID := CosmeticsManager.SortedAuraIndices[0], AuraVFX := CosmeticData.AuraVFXPowerups[StarterAuraID]):
             set CurrentAuraArrayIndex = 0
             set CurrentAuraID = StarterAuraID
+            EquipButtonSpriteProp.SetMaterial(EquipMaterial)
             PreviewAura(CosmeticsManager, AuraVFX)
         race:
             ResetEvent.Await()

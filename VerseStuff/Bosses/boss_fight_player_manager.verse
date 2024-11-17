@@ -28,12 +28,12 @@ boss_fight_player_manager<public> := class:
     var BossMutatorZone : mutator_zone_device = mutator_zone_device{}
     var EnterVolume : volume_device = volume_device{}
 
-    Init<public>(GlobalBossManager : global_boss_manager) : void =
+    Init<public>(GlobalBossManager : global_boss_manager, PVPManager : global_pvp_manager) : void =
         set PlayerManager = GlobalBossManager.PlayerManager
         set BossMutatorZone = GlobalBossManager.BossAreaMutatorZone
-        spawn{Update(GlobalBossManager)}
+        spawn{Update(GlobalBossManager, PVPManager)}
 
-    Update(GlobalBossManager : global_boss_manager)<suspends> : void =
+    Update(GlobalBossManager : global_boss_manager, PVPManager : global_pvp_manager)<suspends> : void =
         loop:
             Agent := GlobalBossManager.BossEnterVolume.AgentEntersEvent.Await()
             if:
@@ -41,9 +41,12 @@ boss_fight_player_manager<public> := class:
                 CustomPlayer := PlayerManager.GetCustomPlayerFromAgent[Agent]
                 not ActiveCustomPlayers.Find[CustomPlayer]
             then:
-                set ActiveCustomPlayers = ActiveCustomPlayers + array{CustomPlayer}
-                CustomPlayerAddedEvent.Signal(CustomPlayer)
-                spawn{CustomPlayer.AwaitPlayerLeavesBossFight()}               
+                if ( PVPManager.IsPVPEnabled[CustomPlayer]):
+                    set ActiveCustomPlayers = ActiveCustomPlayers + array{CustomPlayer}
+                    CustomPlayerAddedEvent.Signal(CustomPlayer)
+                    spawn{CustomPlayer.AwaitPlayerLeavesBossFight()}    
+                else:
+                    GlobalBossManager.BossEnterErrorHud.Show(CustomPlayer.Player)      
  
     (CustomPlayer : custom_player).AwaitPlayerLeavesBossFight()<suspends> : void =
         race:

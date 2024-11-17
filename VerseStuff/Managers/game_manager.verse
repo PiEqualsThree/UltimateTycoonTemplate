@@ -22,6 +22,7 @@ game_manager<public> := class(creative_device):
     @editable       CosmeticShop : global_cosmetic_shop = global_cosmetic_shop{}
     @editable       VaultManager : global_vault_manager = global_vault_manager{}
     @editable       VIPManager : global_vip_manager = global_vip_manager{}
+    @editable       PVPManager : global_pvp_manager = global_pvp_manager{}
     
     ScoreboardManager : scoreboard_manager = scoreboard_manager{}
     CurrencyManager : currency_manager = currency_manager{}
@@ -34,13 +35,14 @@ game_manager<public> := class(creative_device):
         CurrencyManager.Init(UIManager)
         VIPManager.Init(PlayerManager)
         MazeManager.Init(CurrencyManager, UIManager)
-        BossManager.Init(CurrencyManager, PlayerManager, UIManager)
+        BossManager.Init(CurrencyManager, PlayerManager, UIManager, PVPManager)
         CosmeticShop.Init(PlayerManager, CurrencyManager)
         ScoreboardManager.Init(PlayerManager)
         ZombieManager.Init(PlayerManager, CurrencyManager, UIManager)
         ScoreboardManager.Init(PlayerManager)
         VaultManager.Init(PlayerManager)
         VIPManager.Init(PlayerManager)
+        PVPManager.Init(PlayerManager)
         for ( CustomPlayer : PlayerManager.GetCustomPlayers()) do spawn { PollInitNewPlayer(CustomPlayer)}
         for ( TycoonManager : TycoonManagers) do spawn{  BeginTycoonManager(TycoonManager) }
         spawn{ Update()}

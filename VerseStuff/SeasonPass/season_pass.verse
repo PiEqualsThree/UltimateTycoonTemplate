@@ -23,7 +23,7 @@ season_pass<public> := class<concrete>:
 
     SeasonPassResetEvent : event() = event(){}
     UI : season_pass_ui = season_pass_ui{}
-    PremiumKeypad : custom_keypad = custom_keypad{Password := "47351"}
+    PremiumKeypad : custom_keypad = custom_keypad{Password := "9091307"}
 
     var IsPremium : logic = false
 

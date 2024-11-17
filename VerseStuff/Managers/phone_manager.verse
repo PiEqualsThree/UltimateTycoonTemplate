@@ -144,7 +144,7 @@ phone_manager<public> := class<concrete>(resetable):
 
     HandleFreeCandyOption(Owner : custom_player)<suspends> : void =
         if ( not IsFreeCandyClaimOnCooldown?, UIManager := Owner.MaybeTycoonManager?.UIManager):
-            CandyGain := CurrencyManager.GetCustomPlayerCurrencyGain(Owner, Floor[Owner.Candy * 0.1] or 10)
+            CandyGain := CurrencyManager.GetCustomPlayerCurrencyGain(Owner, Floor[Max(Owner.Candy, 100) * 0.1] or 10)
             Transaction := currency_transaction{Type := currency_type.Candy, Amount := CandyGain}
             
             CurrencyManager.IncreaseCurrency(Owner, Transaction)

@@ -21,6 +21,7 @@ secret_collectibles_manager<public> := class:
  
     Reset<public>(Owner : custom_player, Settings : secret_collectible_settings) : void =
         Settings.Tracker.Reset(Owner.Player)
+        Settings.Tracker.Remove(Owner.Player)
         ResetEvent.Signal()
         
     (Collectible : collectible_object_device).AwaitCollection(Owner : custom_player, Settings : secret_collectible_settings)<suspends> : void =

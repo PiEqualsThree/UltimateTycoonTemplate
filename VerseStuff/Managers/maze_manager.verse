@@ -19,6 +19,9 @@ maze_manager<public> := class(creative_device):
     @editable       MazeExitButton : button_device = button_device{}
     @editable       MazeBarrier : barrier_device = barrier_device{}
     @editable       MazeBeacon : beacon_device = beacon_device{}
+    @editable       MazePVPErrorHud : hud_message_device = hud_message_device{}
+    @editable       MazeFinishAudio : audio_player_device = audio_player_device{}
+    @editable       MazeTimeFinishedAudio : audio_player_device = audio_player_device{}
     @editable       CooldownTimer : timer_device = timer_device{}
     
     @editable       MazeTeleporters : []teleporter_device = array{}
@@ -27,6 +30,7 @@ maze_manager<public> := class(creative_device):
     @editable       LargeCollectibles : []collectible_object_device = array{}
     @editable       ExtraLargeCollectibles : []collectible_object_device = array{}
     @editable       ZombieSpawners : []creature_spawner_device = array{}
+    
 
     MazeTimeDeciseconds : int = 50 * 10
     PlayerRemovedEvent : event(custom_player) = event(custom_player){}
@@ -80,14 +84,18 @@ maze_manager<public> := class(creative_device):
             MazeBeacon.AddToShowList(CustomPlayer.Player)
             Agent := MazeEntranceVolume.AgentEntersEvent.Await()
             if ( CustomPlayer.Agent = Agent, UI := CustomPlayerUIMap[CustomPlayer]):
-                MazeBeacon.RemoveFromShowList(CustomPlayer.Player)
-                BeginMazeMinigame(CustomPlayer, TycoonManager, UI)
-                CompletionResult := PlayMazeMinigame(CustomPlayer, TycoonManager, UI)
-                EndMazeMinigame(CustomPlayer, TycoonManager, UI, CompletionResult)
-                loop:
-                    MaybeAgent := CooldownTimer.SuccessEvent.Await()
-                    if ( CustomPlayer.Agent = MaybeAgent?):
-                        break
+                <# Spaghetti code lol #>
+                if ( GameManager := TycoonManager.MaybeGameManager?, GameManager.PVPManager.IsPVPEnabled[CustomPlayer]):
+                    MazeBeacon.RemoveFromShowList(CustomPlayer.Player)
+                    BeginMazeMinigame(CustomPlayer, TycoonManager, UI)
+                    CompletionResult := PlayMazeMinigame(CustomPlayer, TycoonManager, UI)
+                    EndMazeMinigame(CustomPlayer, TycoonManager, UI, CompletionResult)
+                    loop:
+                        MaybeAgent := CooldownTimer.SuccessEvent.Await()
+                        if ( CustomPlayer.Agent = MaybeAgent?):
+                            break
+                else:
+                    MazePVPErrorHud.Show(CustomPlayer.Player)
             else:
                 <# Not the player #>
 
@@ -111,6 +119,7 @@ maze_manager<public> := class(creative_device):
         Timer := custom_timer{Mode := custom_timer_mode.Deciseconds}
         Timer.SetTime(Time)
         Timer.Start()
+        UI.UpdateCurrencyText(0, 0)
         var CollectedCash : int = 0
         var CollectedCandy : int = 0
         var DidFindExit : logic = false
@@ -156,7 +165,8 @@ maze_manager<public> := class(creative_device):
         MazeEntranceTeleporter.Teleport(CustomPlayer.Agent)
         MazeBarrier.RemoveFromIgnoreList(CustomPlayer.Agent)
         UI.Hide()
-
+        Audio := MazeCompletionResult.DidFindExit? and MazeFinishAudio or MazeTimeFinishedAudio
+        Audio.Play(CustomPlayer.Player)
         CurrencyManager.IncreaseCurrency(CustomPlayer, CashTransaction)
         UIManager.DisplayIncomeGain(CustomPlayer, CashTransaction)
         if ( MazeCompletionResult.DidFindExit?):

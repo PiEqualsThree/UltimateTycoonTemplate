@@ -41,7 +41,7 @@ custom_player<public> := class<unique>:
         Sleep(0.0)
         Canvas.AddWidget(
             canvas_slot:
-                Widget := texture_block{DefaultImage := SocialsUI.MapCode, DefaultDesiredSize := vector2{X := 256.0, Y := 32.0}}
+                Widget := texture_block{DefaultImage := SocialsUI.T_Map_Code, DefaultDesiredSize := vector2{X := 256.0, Y := 32.0}}
                 Anchors := anchors{Minimum := vector2{ X := 0.5, Y := 0.0}, Maximum := vector2{ X := 0.5, Y := 0.0}}
                 Alignment := vector2{X := 0.5, Y := 0.0}
                 Offsets := margin{Top := 5.0}

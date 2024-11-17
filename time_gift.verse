@@ -85,6 +85,10 @@ time_gift_box := class<concrete>(resetable):
                 for ( Index->Gift : TimedGiftsMap) { Gift.Tick() }
                 if ( IsDisplayActive? ) { UI.RefreshTimers(TimedGiftsMap) }   
 
+            loop: <# Exit Event #>
+                UI.ExitButton.OnClick().Await()
+                UI.Remove(Owner)
+
         GiftReadyHudDevice.Hide(Owner.Player)
 
     ClaimGift(Owner : custom_player, Gift : tycoon_gift, GiftIndex : int) : void =     

@@ -41,6 +41,7 @@ perks_manager<public> := class<concrete>:
         ExtraXPPerk.UniqueBegin(ExtraXPPerkSettings)
 
     Init<public>(TycoonManager : tycoon_manager) : void =
+        LockerButton.Enable()
         for ( Perk : TycoonPerks) do Perk.Init(TycoonManager)
 
     SetPerkLevel<public>(PerkID : int, PerkLevel : int) : void = 
@@ -119,6 +120,7 @@ perks_manager<public> := class<concrete>:
             PerkLevelIDMap := PerkLevelIDMap
 
     Reset<public>() : void =
+        ResetEvent.Signal()
         LockerButton.Disable()
 
 perks_selection_ui := class:
@@ -187,18 +189,18 @@ perks_selection_ui := class:
                         Slots := ActivePerkWidgetStackBoxSlots
                 overlay_slot: <# Exit Button (Done) #>
                     VerticalAlignment := vertical_alignment.Bottom
-                    HorizontalAlignment := horizontal_alignment.Fill
+                    #HorizontalAlignment := horizontal_alignment.Fill
                     Padding := margin{Bottom := 35.0}
-                    Widget := button:
-                        Slot := button_slot:
-                            Widget := overlay:
-                                Slots := array:
-                                    overlay_slot:
-                                        Widget := color_block{DefaultDesiredSize := vector2{ X := 512.0, Y := 115.0}, DefaultOpacity := 0.0}
-                                    overlay_slot:
-                                        Widget := ExitButton 
-                                        HorizontalAlignment := horizontal_alignment.Fill
-                                        VerticalAlignment := vertical_alignment.Fill
+                    # Widget := button:
+                    #     Slot := button_slot:
+                    Widget := overlay:
+                        Slots := array:
+                            overlay_slot:
+                                Widget := color_block{DefaultDesiredSize := vector2{ X := 512.0, Y := 115.0}, DefaultOpacity := 0.0}
+                            overlay_slot:
+                                Widget := ExitButton 
+                                HorizontalAlignment := horizontal_alignment.Fill
+                                VerticalAlignment := vertical_alignment.Fill
 
     GetRootWidget()<transacts> : widget = RootWidget
     GetCanvas()<transacts> : canvas = Canvas
@@ -245,15 +247,18 @@ perk_selection_widget := class:
             
             PerkTextureBlock.SetImage(PerkSelectionImages[PerkID] or T_Place_Holder)
             if ( Perk.GetLevel() > 0): <# Normal perk behavior I guess lol#>
-                SelectionButton.SetVisibility(widget_visibility.Visible)
+                # SelectionButton.SetEnabled(true)
+                # SelectionButton.SetVisibility(widget_visibility.Visible)
                 PerkLevelTextBlock.SetText(StringToMessage("Lv. {Perk.GetLevel()}"))
                 PerkDescriptionTextBlock.SetText(StringToMessage(Perk.GetDescription()))
             else: <# Locked perk #>
-                SelectionButton.SetVisibility(widget_visibility.Hidden)
+                # SelectionButton.SetEnabled(false)
+                # SelectionButton.SetVisibility(widget_visibility.Collapsed)
                 PerkLevelTextBlock.SetText(StringToMessage("Locked"))
                 PerkDescriptionTextBlock.SetText(StringToMessage(""))         
         else:
-            RootWidget.SetVisibility(widget_visibility.Hidden)
+            # SelectionButton.SetEnabled(false)
+            # RootWidget.SetVisibility(widget_visibility.Collapsed)
     SetPerkOverlay(Image : texture) : void = PerkTextureBlock.SetImage(Image)
     SetPerkLevel(Level : int) : void = PerkLevelTextBlock.SetText(StringToMessage("Lv. {Level}"))
     SetPerkDescription(Description : string) : void = PerkDescriptionTextBlock.SetText(StringToMessage("{Description}"))

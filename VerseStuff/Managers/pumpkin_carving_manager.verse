@@ -204,8 +204,8 @@ pumpkin_carving_manager<public> := class<concrete>:
                 Score := CalculatePumpkinCarvingScore(CurrentMetricTotalMap, MetricWeightSheet)
                 FinalResult := pumpkin_carving_score_result:
                     Score := Score
-                    CashGain :=  60 + (Ceil[(0.37 * 0.01 * Score) * Max(Owner.Candy, 100)] or 1) 
-                    CandyGain := 18 + (Ceil[(0.15 * 0.01 * Score) * Max(Owner.Candy, 100)] or 1)
+                    CashGain :=  60 + (Ceil[(0.55 * 0.01 * Score) * Max(Owner.Candy, 200)] or 1) 
+                    CandyGain := 20 + (Ceil[(0.21 * 0.01 * Score) * Max(Owner.Candy, 200)] or 1)
                 FinishPumpkinCarving(Owner, FinalResult)
 
     AwaitCustomerReadyEvents()<suspends> : void =

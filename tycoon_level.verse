@@ -55,7 +55,6 @@ tycoon_level<public> := class:
                 Accolade := Settings.LevelUpAccolades[Min(Floor(NewLevel / 5), Settings.LevelUpAccolades.Length - 1)] or accolades_device{}
                 spawn{Accolade.DelayAward(Owner.Agent)}
 
-        Owner.Canvas.RemoveWidget(UI.GetRootWidget())
 
     (Accolade : accolades_device).DelayAward(Agent : agent)<suspends> : void =
         Sleep(5.0)
@@ -114,9 +113,9 @@ tycoon_level<public> := class:
         Index := 1.0 * Level
         RoundFactor := 500.0
         StepFactor := 750
-        MaxXP := 25000
+        MaxXP := 50000
         if ( Level > 40) then return MaxXP
-        500 + Min(Round[RoundFactor * Min(100000, Ceil[((1.0 * StepFactor * Index) + Pow(1.141,Index) * (10 * Pow((1.0 + 0.04/1.0),Index)))/RoundFactor]) - RoundFactor] or StepFactor, MaxXP)
+        500 + Min(Round[RoundFactor * Min(100000, Ceil[((1.0 * StepFactor * Index) + Pow(1.1415,Index) * (10 * Pow((1.0 + 0.04/1.0),Index)))/RoundFactor]) - RoundFactor] or StepFactor, MaxXP)
         
     SetXPMultiplier<public>( InMultiplier : float) : void = set CurrentXPMultiplier = InMultiplier
 

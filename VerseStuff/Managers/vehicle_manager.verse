@@ -123,13 +123,13 @@ vehicle_manager<public> := class<concrete>:
         if ( not UnlockedVehicleIDsMap[VehicleID]?, set UnlockedVehicleIDsMap[VehicleID] = true):
             Print("Unlocking Vehicle {VehicleID}")
             set UnlockedVehicleIDs = SortIndicesMap(UnlockedVehicleIDsMap)
-            # If this is first vehicle to be unlocked, update vehicle preview on preview thing
-            if:
-                UnlockedVehicleIDs.Length = 1
-                TycoonManager := Owner.MaybeTycoonManager?
-                VehicleCosmetic := MaybeCosmeticData?.VehicleCosmetics[VehicleID]
-            then:
-                TycoonManager.VehicleSelectionBuilding.VehicleSelectionManager.UpdatePreview(VehicleCosmetic)
+            # # If this is first vehicle to be unlocked, update vehicle preview on preview thing
+            # if:
+            #     UnlockedVehicleIDs.Length = 1
+            #     TycoonManager := Owner.MaybeTycoonManager?
+            #     VehicleCosmetic := MaybeCosmeticData?.VehicleCosmetics[VehicleID]
+            # then:
+            #     TycoonManager.VehicleSelectionBuilding.VehicleSelectionManager.UpdatePreview(VehicleCosmetic)
 
     Reset<public>() : void = 
         ResetEvent.Signal()

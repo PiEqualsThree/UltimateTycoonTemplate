@@ -125,7 +125,7 @@ tycoon_manager<public> := class(creative_device, resetable):
         TycoonDevices.RebirthButton.Enable()
         
         Owner.Init(Self, PlayerStats)
-        Owner.TycoonLevel.GrantXP(150)  
+        Owner.TycoonLevel.GrantXP(900)  
 
         TimeGiftBox.Init(Owner)
         MazeManager.InitPlayer(Owner, Self)
@@ -402,13 +402,18 @@ tycoon_manager<public> := class(creative_device, resetable):
     GetTycoonBuildingXPGain(TycoonBuildingID : int)<transacts> : int =
         <# Normal Floor Building #>
         if ( TycoonBuildingID >= 100):
-            return Clamp((10 * (Ceil(TycoonBuildingID / 100)) + 10 * Mod[TycoonBuildingID, 100]), 25, 1000) or 25
-        <# Special Buliding (Negative) #>
-        if ( TycoonBuildingID < 0):
-            return Clamp(Abs(TycoonBuildingID * 25), 25, 500)
-        <# Other Special Building - Battle pass, etc. #>
+            #return (TycoonBuildingID / 100)
+            return Clamp((10 * (Ceil(TycoonBuildingID / 100)) + 3 * Mod[TycoonBuildingID, 100]), 25, 1000) or 25
+        <# Droppers #>
+        if ( TycoonBuildingID <= -10 and TycoonBuildingID >= -19):
+            return Clamp(25 * (Mod[TycoonBuildingID * -1, 10] or 1), 25, 500)
+        if ( TycoonBuildingID <= -1 and TycoonBuildingID >= -9):
+            return Clamp(25 * (Mod[TycoonBuildingID * -1, 10] or 1), 25, 500)
         if ( TycoonBuildingID < 100):
-            return Clamp(Abs(TycoonBuildingID * 25), 25, 500)
+            return 50
+        <# Other Special Building - Battle pass, etc. #>
+        if ( TycoonBuildingID < -30):
+            return 25
         0
         
     IsBuildingPurchased<public>(TycoonBuildingID : int)<transacts><decides> : void = purchasable[TycoonBuildingIDMap[TycoonBuildingID]].GetPurchaseStatus() = purchase_status.Purchased

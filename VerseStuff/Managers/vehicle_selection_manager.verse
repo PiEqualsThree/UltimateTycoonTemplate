@@ -71,6 +71,7 @@ vehicle_selection_manager<public> := class<concrete>:
                     VehicleID := VehicleManager.UnlockedVehicleIDs[VehicleArrayIndex]
                     VehicleCosmetic := GlobalCosmeticData.VehicleCosmetics[VehicleID]
                 then:
+                    set CurrentVehicleArrayIndex = VehicleArrayIndex
                     set CurrentVehicleID = VehicleID
                     UpdatePreview(VehicleCosmetic)
         
@@ -82,11 +83,12 @@ vehicle_selection_manager<public> := class<concrete>:
                     VehicleID := VehicleManager.UnlockedVehicleIDs[VehicleArrayIndex]
                     VehicleCosmetic := GlobalCosmeticData.VehicleCosmetics[VehicleID]
                 then:
+                    set CurrentVehicleArrayIndex = VehicleArrayIndex
                     set CurrentVehicleID = VehicleID
                     UpdatePreview(VehicleCosmetic)
 
             loop: <# Rotate vehicle lol #>
-                VehiclePreviewProp.MoveTo(DefaultPreviewVehiclePropTransform.Translation, VehiclePreviewProp.GetTransform().Rotation.ApplyYaw(1.95 * PiFloat), 5.0)
+                VehiclePreviewProp.MoveTo(DefaultPreviewVehiclePropTransform.Translation, VehiclePreviewProp.GetTransform().Rotation.ApplyYaw(1.95 * PiFloat), 3.0)
         
     UpdatePreview<public>( Vehicle : vehicle_cosmetic) : void =
         VehiclePreviewProp.Show()
@@ -102,6 +104,7 @@ vehicle_selection_manager<public> := class<concrete>:
     Reset<public>() : void = 
         set CurrentVehicleID = -1
         VehiclePreviewProp.Hide()
+        ResetEvent.Signal()
 
     
     

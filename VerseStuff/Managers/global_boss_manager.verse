@@ -25,6 +25,7 @@ global_boss_manager<public> := class(creative_device):
     @editable       BossAreaMutatorZone<public> : mutator_zone_device = mutator_zone_device{}
     @editable       BossReadyAudio : audio_player_device = audio_player_device{}
     @editable       BossReadyHud : hud_message_device = hud_message_device{}
+    @editable       BossEnterErrorHud<public> : hud_message_device = hud_message_device{}
     @editable       BossEnterVolume<public> : volume_device = volume_device{}
     @editable       BossEnterTeleporter : teleporter_device = teleporter_device{}
     @editable       OverworldTeleporter : teleporter_device = teleporter_device{}
@@ -45,14 +46,14 @@ global_boss_manager<public> := class(creative_device):
 
     var BossManagers : []boss_manager = array{}
     
-    Init<public>(InCurrencyManager : currency_manager, InPlayerManager : player_manager, InUIManager : user_interface_manager) : void =
+    Init<public>(InCurrencyManager : currency_manager, InPlayerManager : player_manager, InUIManager : user_interface_manager, PVPManager : global_pvp_manager) : void =
         Print("Init boss manager!")
         set CurrencyManager = InCurrencyManager
         set PlayerManager = InPlayerManager
         set UIManager = InUIManager
         if ( RedSpiritManager := RedSpiritBossManager?) then set BossManagers = BossManagers + array{RedSpiritManager}
         for ( Manager : BossManagers) do Manager.Init(Self)
-        BossFightPlayerManager.Init(Self)
+        BossFightPlayerManager.Init(Self, PVPManager)
         spawn{ Update()}
         
     Update()<suspends> : void =

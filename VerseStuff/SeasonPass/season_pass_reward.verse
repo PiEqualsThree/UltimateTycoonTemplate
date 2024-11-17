@@ -96,29 +96,29 @@ FreeRewardImages<public> : []texture = array:
     <# 5#>T_Cosmetic_Pirate_Hat
     <# 6#>T_Perk_Icon_Refund
     <# 7#>T_Bling_Bucks 
-    <# 8#>T_Aura_Basic_White
+    <# 8#>T_Aura_Basic_Green
     <# 9#>T_Shockwave_Grenades
     <#10#>T_Bling_Bucks
     <#11#>T_Perk_Icon_Refund
-    <#12#>T_Aura_Basic_Green
+    <#12#>T_Aura_Basic_Blue
     <#13#>T_Bling_Bucks 
     <#14#>T_Shockwave_Grenades 
     <#15#>T_Bling_Bucks
     <#16#>T_Perk_Icon_Refund
-    <#17#>T_Aura_Basic_Blue
+    <#17#>T_Aura_Basic_Pink
     <#18#>T_Bling_Bucks 
     <#19#>T_Dual_Micro_SMG 
     <#20#>T_Perk_Icon_Refund 
     <#21#>T_Cosmetic_Panda_Mask
     <#22#>T_Bling_Bucks
-    <#23#>T_Aura_Basic_Pink
+    <#23#>T_Aura_Basic_Gold
     <#24#>T_Perk_Icon_Refund 
     <#25#>T_Bling_Bucks
     <#26#>T_Shockwave_Bow
     <#27#>T_Bling_Bucks
     <#28#>T_Bling_Bucks
     <#29#>T_Perk_Icon_Refund
-    <#30#>T_Aura_Basic_Gold
+    <#30#>T_Aura_Basic_Red
     <#31#>T_Bling_Bucks
     <#32#>T_Jetpack
     <#33#>T_Bling_Bucks
@@ -127,7 +127,7 @@ FreeRewardImages<public> : []texture = array:
     <#36#>T_Bling_Bucks
     <#37#>T_Grapple_Glove
     <#38#>T_Perk_Icon_Refund
-    <#39#>T_Aura_Basic_Red
+    <#39#>T_Aura_Halo
 
 
 PremiumRewardImages<public> : []texture = array:

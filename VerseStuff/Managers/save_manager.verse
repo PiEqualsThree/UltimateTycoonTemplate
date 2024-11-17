@@ -45,16 +45,16 @@ save_manager<public> := class:
     GetBuildingStats(TycoonManager : tycoon_manager, ShouldResetTycoonStats : logic)<suspends> : tycoon_building_stats = 
         Sleep(0.0)
         tycoon_building_stats:
-            CurrencyCollectorCash := ShouldResetTycoonStats? and TycoonManager.CurrencyCollector.StoredCash or 0
-            PurchasedBuildingIDs := ShouldResetTycoonStats? and PurchasedBuildingIDs or array{}
-            UnlockedBuildingIDs := ShouldResetTycoonStats? and UnlockedBuildingIDs or array{-1}
-            UpgradableBuildingLevelMap := ShouldResetTycoonStats? and UpgradableBuildingLevelMap or map{}
+            CurrencyCollectorCash := not ShouldResetTycoonStats? and TycoonManager.CurrencyCollector.StoredCash or 0
+            PurchasedBuildingIDs := not ShouldResetTycoonStats? and PurchasedBuildingIDs or array{}
+            UnlockedBuildingIDs := not ShouldResetTycoonStats? and UnlockedBuildingIDs or array{-1}
+            UpgradableBuildingLevelMap := not ShouldResetTycoonStats? and UpgradableBuildingLevelMap or map{}
 
     GetCurrencyStats(Owner : custom_player, ShouldResetCurrency : logic)<suspends> : tycoon_currency_stats =
         Sleep(0.0)
         tycoon_currency_stats:
-            Cash := ShouldResetCurrency? and Owner.Cash or 0
-            Candy := ShouldResetCurrency? and Owner.Candy or 0
+            Cash := ShouldResetCurrency? and 0 or Owner.Cash
+            Candy := not ShouldResetCurrency? and Owner.Candy or 0
             BlingBucks := Owner.BlingBucks
             Rebirths := Owner.Rebirths
         
