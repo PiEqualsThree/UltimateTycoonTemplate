@@ -51,8 +51,10 @@ pumpkin_carving_manager<public> := class<concrete>:
     ResetEvent : event() = event(){}
     PumpkinCarvingBeginEvent : event() = event(){}
     PumpkinCarvingEndEvent : event() = event(){}
+    PumpkinRestockedEvent : event() = event(){}
     ScoreWidget : pumpkin_carving_score_widget = pumpkin_carving_score_widget{}
 
+    PumpkinStockQueue : pumpkin_stock_type_queue = pumpkin_stock_type_queue{}
     ComponentSwitchThrottleTime : float = 0.25
     
     var MaybeOwner : ?custom_player = false
@@ -142,6 +144,10 @@ pumpkin_carving_manager<public> := class<concrete>:
             PollPumpkinCarvingEvents(Owner)
             AwaitCustomerReadyEvents()
 
+    RestockPumpkin<public>(PumpkinType : pumpkin_stock_type) : void =
+        PumpkinStockQueue.Queue(PumpkinType)
+        PumpkinRestockedEvent.Signal()
+
     BeginPumpkinCarving(Owner : custom_player, MetricWeightSheet : [pumpkin_carving_metric]int)<suspends> : void =
         set AllowComponentChange = true
         InteractButton.Disable()
@@ -196,6 +202,9 @@ pumpkin_carving_manager<public> := class<concrete>:
         set SelectedEyesID = -1
         set SelectedMouthID = -1
         set ShouldShowTutorial = false
+
+    AwaitCollectionEvents()<suspends> : void =
+        {}
 
     PollPumpkinCarvingEvents(Owner : custom_player)<suspends> : void =
         loop:
@@ -373,8 +382,9 @@ pumpkin_carving_manager<public> := class<concrete>:
         set SelectedColorID = 0
         set SelectedTopID = -1
         set SelectedEyesID = -1
-        set SelectedMouthID = 0-1
-        
+        set SelectedMouthID = -1
+       
+        PumpkinStockQueue.Reset() 
         for ( Device : CustomerCharacterDevices) do Device.Hide()
         for ( Decal : EyeDecals) do Decal.Hide()
         for ( Decal : MouthDecals) do Decal.Hide()
@@ -382,6 +392,7 @@ pumpkin_carving_manager<public> := class<concrete>:
         PumpkinBase.Hide()
         PumpkinTop.Hide()
         ResetEvent.Signal()
+
 
 pumpkin_carving_ui := class:
     Canvas : canvas = canvas{}

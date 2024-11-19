@@ -18,3 +18,9 @@ upgradable<public> := interface:
     GetUnlockedBulidingIDs<public>()<transacts> : []int
     IsUnlocked<public>()<transacts><decides> : void
     
+upgradable_building_data<public> := class<concrete>:
+    @editable       Price<public> : int = 0
+    @editable       PurchaseType<public> : currency_type = currency_type.Cash
+    @editable       PurchaseButton<public> : creative_prop = creative_prop{}
+    @editable       NextBuildingUnlockIDs<public> : []int = array{}
+    @editable       PassiveIncome<public> : passive_income = passive_income{}
