@@ -70,7 +70,6 @@ time_gift_box := class<concrete>(resetable):
                 if ( Owner.Agent = Agent):
                     set IsDisplayActive = true
                     UI.Display(Owner)
-                    set IsDisplayActive = false
 
             loop: <# Await Gift Click event #>
                 GiftIndex := UI.GiftButtonClickedEvent.Await()
@@ -88,6 +87,7 @@ time_gift_box := class<concrete>(resetable):
             loop: <# Exit Event #>
                 UI.ExitButton.OnClick().Await()
                 UI.Remove(Owner)
+                set IsDisplayActive = false
 
         GiftReadyHudDevice.Hide(Owner.Player)
 

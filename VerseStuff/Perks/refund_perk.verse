@@ -62,7 +62,7 @@ refund_perk<public> := class(tycoon_perk):
                     UpgradeResult := TycoonManager.TycoonBuildingUpgradedEvent.Await()
                     UpgradeResult.Transaction
                     
-            if ( Transaction.Type = currency_type.Cash, Chance := (Level * 5), Chance > GetRandomInt(1, 1000)):
+            if ( Transaction.Type = currency_type.Cash, Chance := (Level * 5), Chance >= GetRandomInt(1, 1000)):
                 CashbackTransaction := currency_transaction{ Amount := Transaction.Amount, Type := Transaction.Type }
                 TycoonManager.CurrencyManager.IncreaseCurrency(Owner, CashbackTransaction)
                 TycoonManager.UIManager.DisplayIncomeGain(Owner, CashbackTransaction, ?AdditionalText := " (Full Refund!)", ?TextColor := MakeColorFromHex("00FF38FF"))

@@ -70,8 +70,8 @@ cashback_perk<public> := class(tycoon_perk):
     SetLevel<override>(InLevel : int) : void = set Level = InLevel
     GetLevel<override>()<transacts> : int = Level
     GetDescription<override>()<transacts> : string = 
-        <# TODO: Make percent dynamic based on level #>
-        "Gain 2% cash back on all\n" + 
-        "buliding purchases made"
+        Thing := (Level * 5.0) / 10.0
+        "Earn {FormatFloat(Thing, 1)}% cash back\n" + 
+        "on all purchases!"
 
 cashback_perk_settings<public> := class<concrete>(tycoon_perk_settings):

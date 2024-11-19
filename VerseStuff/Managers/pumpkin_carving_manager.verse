@@ -25,6 +25,7 @@ using { PumpkinStuff.PumpkinTops}
 
 pumpkin_carving_manager<public> := class<concrete>:
     @editable       InteractButton : button_device = button_device{}
+    @editable       Accolades : []accolades_device = array{}
     @editable       Camera : gameplay_camera_fixed_point_device = gameplay_camera_fixed_point_device{}
     @editable       Shop : pumpkin_carving_shop = pumpkin_carving_shop{}
     @editable       ScorePageVFX : vfx_spawner_device = vfx_spawner_device{}
@@ -162,6 +163,7 @@ pumpkin_carving_manager<public> := class<concrete>:
 
         Camera.AddTo(Owner.Agent)
         Owner.FortCharacter.Hide()
+        Owner.FortCharacter.SetVulnerability(false)
 
     FinishPumpkinCarving(Owner : custom_player, PumpkinCarvingResult : pumpkin_carving_score_result)<suspends> : void =
         Print("Pumpkin score: {PumpkinCarvingResult.Score}")
@@ -169,11 +171,13 @@ pumpkin_carving_manager<public> := class<concrete>:
         ScoreWidget.Display(Owner, Self, PumpkinCarvingResult)
         ScorePageVFX.Restart()
         Owner.FortCharacter.Show()
+        Owner.FortCharacter.SetVulnerability(true)
         Camera.RemoveFrom(Owner.Agent)
         set IsCustomerReady = false
         CurrentCharacterDevice.PlayEmote()
+        AccoladesArray := Shuffle(Accolades)
+        if ( A := AccoladesArray[0]) then A.Award(Owner.Player)
         Sleep(1.0)
-        if ( ShouldShowTutorial?) then Print("Hfajd;fakjsf")
         CustomerDespawnVFX.Restart()
         CustomerReadyBeacon.Disable()
         CurrentCharacterDevice.Hide()
@@ -204,8 +208,8 @@ pumpkin_carving_manager<public> := class<concrete>:
                 Score := CalculatePumpkinCarvingScore(CurrentMetricTotalMap, MetricWeightSheet)
                 FinalResult := pumpkin_carving_score_result:
                     Score := Score
-                    CashGain :=  60 + (Ceil[(0.55 * 0.01 * Score) * Max(Owner.Candy, 200)] or 1) 
-                    CandyGain := 20 + (Ceil[(0.21 * 0.01 * Score) * Max(Owner.Candy, 200)] or 1)
+                    CashGain :=  60 + (Ceil[(0.55 * 0.01 * Score) * Max(Min(Owner.Candy, 10000000), 400)] or 1) 
+                    CandyGain := 20 + (Ceil[(0.22 * 0.01 * Score) * Max(Min(Owner.Candy, 7500000), 235)] or 1)
                 FinishPumpkinCarving(Owner, FinalResult)
 
     AwaitCustomerReadyEvents()<suspends> : void =
@@ -220,7 +224,7 @@ pumpkin_carving_manager<public> := class<concrete>:
             CurrentCharacterDevice.PlayEmote()
             PumpkinCarvingEndEvent.Await()
 
-            TicksToReady : int = GetRandomInt(100, 750)
+            TicksToReady : int = GetRandomInt(30, 275)
             if ( CustomerCooldownProp.TeleportTo[DefaultCooldownPropTransform]) {}
             for ( I := 1..TicksToReady) do {set CustomerCooldownMaterial.Progress = (1.0 * I) / (1.0 * TicksToReady); Sleep(0.0)}
             if ( CustomerCooldownProp.TeleportTo[DefaultCooldownPropTransform.Translation - vector3{ Z := 3000.0}, rotation{}]) {}
@@ -229,6 +233,7 @@ pumpkin_carving_manager<public> := class<concrete>:
     AwaitPumpkinCarvingUIEvents(Owner : custom_player, MetricWeightSheet : [pumpkin_carving_metric]int)<suspends> : void =
         race:
             ResetEvent.Await()
+            Owner.FortCharacter.EliminatedEvent().Await()
             PumpkinUI.FinishButton.OnClick().Await()
             AwaitAndResolvePageButtonPress(Owner, 0)
             AwaitAndResolvePageButtonPress(Owner, 1)
@@ -550,7 +555,7 @@ pumpkin_carving_tutorial_settings<public> := class<concrete>:
     @editable       CustomerHud : hud_message_device = hud_message_device{}
 
     QueueDisplayCustomerTutorial(CustomPlayer : custom_player)<suspends> : void =
-        Sleep(5.0)
+        Sleep(5.5)
         CustomerHud.Show(CustomPlayer.Player)
 
     QueueDisplayShopTutorial(CustomPlayer : custom_player)<suspends> : void =

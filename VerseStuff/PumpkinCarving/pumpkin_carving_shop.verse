@@ -80,7 +80,7 @@ pumpkin_carving_shop<public> := class<concrete>:
     AwaitButtonInteraction(Owner : custom_player, PumpkinCarvingManager : pumpkin_carving_manager)<suspends> : void =
         loop:
             Agent := Button.InteractedWithEvent.Await()
-            if ( Owner.Agent = Agent):
+            if ( Owner.Agent = Agent, PageIndex := GetPageIndexWithAvailableComponents[CurrentComponentPage]):
                 set ThrottleComponentChange = false
                 UpdateAvailableMaterials(PumpkinCarvingManager)
                 UpdateAvailableTops(PumpkinCarvingManager)
@@ -174,6 +174,7 @@ pumpkin_carving_shop<public> := class<concrete>:
                         2 => PumpkinCarvingManager.UnlockEyes(AvailableEyeIDs[CurrentComponentIndex] or -1)
                         3 => PumpkinCarvingManager.UnlockMouth(AvailableMouthIDs[CurrentComponentIndex] or -1)
                         _ => Print("Unkown component page index!")
+                    set CurrentComponentIndex = -1
                     Sleep(1.0)
                     break
                         
@@ -258,6 +259,24 @@ pumpkin_carving_shop<public> := class<concrete>:
             Decal.Show()
         else:
             Print("No mouth decals to show")
+
+    GetPageIndexWithAvailableComponents(CurrentPageIndex : int)<transacts><decides> : int = 
+        var AvailablePageIndex : ?int = false
+        if ( not PageHasAvailableComponents[CurrentPageIndex]):
+            var HasIndexBeenFound : logic = false
+            for ( I := 0..3, I <> CurrentPageIndex, not HasIndexBeenFound?, PageHasAvailableComponents[I]):
+                set AvailablePageIndex = option{I}
+                set HasIndexBeenFound = true
+            AvailablePageIndex?
+        else:
+            CurrentPageIndex
+
+    PageHasAvailableComponents(PageIndex : int)<transacts><decides> : void =
+        case(PageIndex):
+            0 => AvailableMaterialIDs[0]
+            1 => AvailableTopIDs[0]
+            2 => AvailableEyeIDs[0]
+            3 => AvailableMouthIDs[0]
 
     # Type Index: 0 = Material, 1 = Top, 2 = Eye, 3 = Mouth
     GetComponentPrice(ComponentTypeIndex : int, ComponentID : int) : int = 
@@ -400,29 +419,36 @@ pumpkin_carving_shop_ui := class:
                 overlay_slot: <# Purchase Button #>
                     VerticalAlignment := vertical_alignment.Bottom
                     HorizontalAlignment := horizontal_alignment.Left
-                    Padding := margin{Left := 210.0}
+                    Padding := margin{Left := 150.0, Bottom := 75.0}
                     Widget := overlay:
                         Slots := array:
                             overlay_slot:
-                                Widget := texture_block{DefaultImage := T_Pumpkin_Shop_Buy_Button, DefaultDesiredSize := vector2{ X := 512.0, Y := 128.0}}
+                                Widget := texture_block{DefaultImage := T_Pumpkin_Shop_Buy_Button, DefaultDesiredSize := vector2{ X := 650.0, Y := 175.0}}
                             overlay_slot:
                                 Widget := PurchaseButton 
-                                Padding := margin{Top := 15.0, Bottom := 100.0}
+                                Padding := margin{Top := 15.0, Bottom := 15.0}
                                 HorizontalAlignment := horizontal_alignment.Fill
                                 VerticalAlignment := vertical_alignment.Fill
 
-                overlay_slot: <# Finish Button #>
-                    HorizontalAlignment := horizontal_alignment.Left
-                    VerticalAlignment := vertical_alignment.Top
-                    Padding := margin{Left := 1260.0, Top := 985.0}
+                overlay_slot: <# Exit Button #>
+                    VerticalAlignment := vertical_alignment.Bottom
+                    Padding := margin{Left := 540.0, Top := 15.0}
                     Widget := overlay:
                         Slots := array:
                             overlay_slot:
-                                Widget := color_block{DefaultDesiredSize := vector2{ X := 485.0, Y := 80.0}, DefaultOpacity := 0.0}
+                                Widget := color_block{DefaultDesiredSize := vector2{ X := 850.0, Y := 80.0}, DefaultOpacity := 0.0}
                             overlay_slot:
-                                Widget := FinishButton
                                 HorizontalAlignment := horizontal_alignment.Fill
-                                VerticalAlignment := vertical_alignment.Fill
+                                Widget := button:
+                                    Slot := button_slot:                    
+                                        Widget := overlay:
+                                            Slots := array:
+                                                overlay_slot:
+                                                    Widget := color_block{DefaultDesiredSize := vector2{ X := 490.0, Y := 84.0}, DefaultOpacity := 0.0}
+                                                overlay_slot:
+                                                    Widget := FinishButton
+                                                    HorizontalAlignment := horizontal_alignment.Fill
+                                                    VerticalAlignment := vertical_alignment.Fill
 
 pumpkin_carving_shop_component_slot_widget := class:
     PurchaseButton<public> : button_quiet = button_quiet{}

@@ -56,6 +56,7 @@ tycoon_manager<public> := class(creative_device, resetable):
     var OriginalClaimMutatorZoneTransform : transform = transform{}
 
     var OwnerPosition : vector3 = vector3{}
+    var IsOccupied : logic = false
 
 
     UniqueBegin<public>(GameManager : game_manager)<suspends> : void =
@@ -108,6 +109,8 @@ tycoon_manager<public> := class(creative_device, resetable):
         if:
             StartingPropsContainer.TeleportTo[OriginalStartingPropsContainerTransform.Translation - vector3{Z := 3000.0}, OriginalStartingPropsContainerTransform.Rotation]
             ClaimMutatorZone.TeleportTo[OriginalClaimMutatorZoneTransform]
+
+        set IsOccupied = false
         loop:
             Agent := ClaimMutatorZone.AgentEntersEvent.Await()
             if:
@@ -119,6 +122,8 @@ tycoon_manager<public> := class(creative_device, resetable):
 
     StartTycoon(Owner : custom_player, GameManager : game_manager)<suspends> : void =
         Print("Starting TycooN!")
+        set IsOccupied = true
+        GameManager.PVPManager.SetPVPEnabledState(Owner, true)
         PlayerStats := PlayerStatsManager.GetStats(Owner.Player)
         TycoonDevices.TeamSelector.ChangeTeam(Owner.Agent)
         TycoonDevices.PlayerReference.Register(Owner.Player)

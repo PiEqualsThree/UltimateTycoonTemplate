@@ -160,10 +160,12 @@ maze_manager<public> := class(creative_device):
     EndMazeMinigame(CustomPlayer : custom_player, TycoonManager : tycoon_manager, UI : maze_ui, MazeCompletionResult : maze_completion_result)<suspends> : void =
         CashTransaction := currency_transaction{Amount := MazeCompletionResult.CollectedCash, Type := currency_type.Cash}
         CandyTransaction := currency_transaction{Amount := MazeCompletionResult.CollectedCandy, Type := currency_type.Candy}
-        <# TODO: Show Results #>
-        CooldownTimer.Start(CustomPlayer.Agent)
+        CooldownTimer.Reset(CustomPlayer.Player)
+        Sleep(0.25)
         MazeEntranceTeleporter.Teleport(CustomPlayer.Agent)
         MazeBarrier.RemoveFromIgnoreList(CustomPlayer.Agent)
+        MazeBeacon.RemoveFromShowList(CustomPlayer.Agent)
+        CooldownTimer.Start(CustomPlayer.Agent)
         UI.Hide()
         Audio := MazeCompletionResult.DidFindExit? and MazeFinishAudio or MazeTimeFinishedAudio
         Audio.Play(CustomPlayer.Player)

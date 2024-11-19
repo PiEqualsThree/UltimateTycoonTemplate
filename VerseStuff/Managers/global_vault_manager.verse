@@ -33,6 +33,10 @@ global_vault_manager := class<concrete>:
                 Agent := ExitButton.InteractedWithEvent.Await()
                 ExitTeleporter.Teleport(Agent)
 
+            loop:
+                LeavingCustomPlayer := PlayerManager.CustomPlayerRemovedEvent.Await()
+                spawn{ HandleCustomPlayerLeave(LeavingCustomPlayer) }
+
     (CustomPlayer : custom_player).AwaitKeypad(PlayerManager : player_manager)<suspends> : void =
         var MaybeKeypad : ?custom_keypad = false
         if ( Keypad :=  CustomPlayerKeypadMap[CustomPlayer]):
@@ -49,6 +53,7 @@ global_vault_manager := class<concrete>:
             race:
                 Sleep(60.0)
                 CustomPlayer.FortCharacter.EliminatedEvent().Await()
+                Keypad.ExitEvent.Await()
                 loop:
                     RemovedCustomPlayer := PlayerManager.CustomPlayerRemovedEvent.Await()
                     if ( CustomPlayer = RemovedCustomPlayer) then break
@@ -59,5 +64,9 @@ global_vault_manager := class<concrete>:
 
             Keypad.Remove(CustomPlayer)
                 
+    HandleCustomPlayerLeave(CustomPlayer : custom_player)<suspends> : void =
+        Sleep(0.0)
+        if ( Keypad := CustomPlayerKeypadMap[CustomPlayer]) then Keypad.Reset()
+        set CustomPlayerKeypadMap = CustomPlayerKeypadMap.RemoveKey(CustomPlayer)
 
             

@@ -46,10 +46,15 @@ boss_fight_player_manager<public> := class:
                     CustomPlayerAddedEvent.Signal(CustomPlayer)
                     spawn{CustomPlayer.AwaitPlayerLeavesBossFight()}    
                 else:
-                    GlobalBossManager.BossEnterErrorHud.Show(CustomPlayer.Player)      
+                    GlobalBossManager.BossEnterErrorHud.Show(CustomPlayer.Player)    
+                    
+    ClearActivePlayers<public>() : void = 
+        for ( CustomPlayer : ActiveCustomPlayers) do CustomPlayerRemovedEvent.Signal(CustomPlayer)
+        set ActiveCustomPlayers = array{}
  
     (CustomPlayer : custom_player).AwaitPlayerLeavesBossFight()<suspends> : void =
         race:
+            CustomPlayerRemovedEvent.Await()
             CustomPlayer.FortCharacter.EliminatedEvent().Await()
             loop:
                 Sleep(15.0)
@@ -57,10 +62,8 @@ boss_fight_player_manager<public> := class:
             loop:
                 LeavingCustomPlayer := PlayerManager.CustomPlayerRemovedEvent.Await()
                 if ( CustomPlayer = LeavingCustomPlayer) then break
-            loop:
-                LeavingAgent := BossMutatorZone.AgentExitsEvent.Await()
-                if ( CustomPlayer.Agent = LeavingAgent) then break
-        set ActiveCustomPlayers = for ( CPlayer : ActiveCustomPlayers, CustomPlayer <> CPlayer) do CustomPlayer
+
+        set ActiveCustomPlayers = for ( CPlayer : ActiveCustomPlayers, CustomPlayer <> CPlayer) do CPlayer
         CustomPlayerRemovedEvent.Signal(CustomPlayer)
    
     GetNearestPlayer<public>(BossFortCharacter : fort_character)<transacts><decides> : custom_player =

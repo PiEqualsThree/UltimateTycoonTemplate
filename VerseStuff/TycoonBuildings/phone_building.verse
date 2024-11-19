@@ -15,7 +15,7 @@ using { TycoonAnimations }
 
 phone_building<public> := class<concrete>(tycoon_building, purchasable, resetable): 
     @editable       ID : int = -1
-    @editable       PhoneManager : phone_manager = phone_manager{}
+    @editable       PhoneManager<public> : phone_manager = phone_manager{}
     @editable       Price : int = 0
     @editable       PurchaseCurrencyType : currency_type = currency_type.Cash
     @editable       ContainerProp : creative_prop = creative_prop{}

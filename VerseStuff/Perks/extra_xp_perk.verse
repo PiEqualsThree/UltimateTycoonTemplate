@@ -40,7 +40,7 @@ extra_xp_perk<public> := class(tycoon_perk):
         if ( not IsEnabled?):
             set IsEnabled = true
             set MaybeOwner = option{Owner}
-            Owner.TycoonLevel.SetXPMultiplier(Level * 0.05)
+            Owner.TycoonLevel.SetXPMultiplier(1.0 + Level * 0.025)
 
     Disable<override>() : void =
         if ( IsEnabled?, Owner := MaybeOwner?):
@@ -54,8 +54,8 @@ extra_xp_perk<public> := class(tycoon_perk):
     SetLevel<override>(InLevel : int) : void = set Level = InLevel
     GetLevel<override>()<transacts> : int = Level
     GetDescription<override>()<transacts> : string = 
-        <# TODO: Make percent dynamic based on level #>
-        "Gain 2% cash back on all\n" + 
-        "buliding purchases made"
-
+        Thing := (Level * 2.5)
+        "Earn {FormatFloat(Thing, 1)}% extra Tycoon XP!\n" +
+        "NOTE: This is NOT Battle Pass XP"
+        
 extra_xp_perk_settings<public> := class<concrete>(tycoon_perk_settings):

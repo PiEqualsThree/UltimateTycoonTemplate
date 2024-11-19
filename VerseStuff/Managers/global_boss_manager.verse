@@ -144,7 +144,7 @@ global_boss_manager<public> := class(creative_device):
         else:
             <# Boss fight time ran out! #>
         Print("After end: {ActiveCustomPlayers.Length} player sin boss fight")
-
+        BossFightPlayerManager.ClearActivePlayers()
     HandleCustomPlayerJoinBossFight(CustomPlayer : custom_player) : void =
         BossEnterTeleporter.Teleport(CustomPlayer.Player)
         if ( Widget := CustomPlayerBossHPWidgetMap[CustomPlayer], BossManager := MaybeCurrentBossManager?):

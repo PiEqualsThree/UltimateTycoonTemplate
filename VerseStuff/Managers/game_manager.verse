@@ -23,14 +23,17 @@ game_manager<public> := class(creative_device):
     @editable       VaultManager : global_vault_manager = global_vault_manager{}
     @editable       VIPManager : global_vip_manager = global_vip_manager{}
     @editable       PVPManager : global_pvp_manager = global_pvp_manager{}
+    @editable       GameStartManager : global_game_start_manager = global_game_start_manager{}
     
     ScoreboardManager : scoreboard_manager = scoreboard_manager{}
     CurrencyManager : currency_manager = currency_manager{}
     PlayerStatsManager : player_stats_manager = player_stats_manager{}
 
+
     OnBegin<override>()<suspends>:void=
         if ( set GetDefaultBlueprintAsset[GetSession()] = DefaultBlueprintAsset) {}
         PlayerManager.Init(GetPlayspace())
+        GameStartManager.Init(Self)
         UIManager.Init(PlayerManager)
         CurrencyManager.Init(UIManager)
         VIPManager.Init(PlayerManager)

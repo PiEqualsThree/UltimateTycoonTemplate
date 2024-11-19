@@ -85,10 +85,13 @@ season_pass<public> := class<concrete>:
             if ( FreeReward := MaybeFreeRewards[I - 1]?) then FreeReward.Unlock()
             if ( PremiumReward := MaybePremiumRewards[I - 1]?) then PremiumReward.Unlock()
             Sleep(0.0)
-        for ( ID : SeasonPassStats.ClaimedFreeRewardIDs, Reward := MaybeFreeRewards[ID]?, not Reward.BlingBucksReward?):
-            Reward.Claim(Owner, TycoonManager, Self)
-            if ( Mod[ID, 7] = 0) then Sleep(0.0)
-            
+        for ( ID : SeasonPassStats.ClaimedFreeRewardIDs, Reward := MaybeFreeRewards[ID]?):
+            # Don't claim bling bucks twice
+            if ( Reward.BlingBucksReward?):
+                Reward.SetClaimStatus(season_pass_reward_claim_status.Claimed)
+            else:
+                Reward.Claim(Owner, TycoonManager, Self)
+                if ( Mod[ID, 7] = 0) then Sleep(0.0)    
         for ( ID : SeasonPassStats.ClaimedPremiumRewardIDs, Reward := MaybePremiumRewards[ID]?, not Reward.BlingBucksReward?):
             Reward.Claim(Owner, TycoonManager, Self)
             if ( Mod[ID, 7] = 0) then Sleep(0.0)

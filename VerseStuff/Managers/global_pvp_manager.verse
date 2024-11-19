@@ -58,4 +58,10 @@ global_pvp_manager<public> := class<concrete>:
                 LeavingCustomPlayer := PlayerManager.CustomPlayerRemovedEvent.Await()
                 set CustomPlayerPVPStateMap = CustomPlayerPVPStateMap.RemoveKey(LeavingCustomPlayer)
 
+    SetPVPEnabledState<public>(CustomPlayer : custom_player, PVPStatus : logic) : void =
+        if ( PVPStatus?):
+            PVPOnChannel.Transmit(option{CustomPlayer.Player})
+        else:
+            PVPOffChannel.Transmit(option{CustomPlayer.Player})
+
     IsPVPEnabled<public>(CustomPlayer : custom_player)<transacts><decides> : void = CustomPlayerPVPStateMap[CustomPlayer]?

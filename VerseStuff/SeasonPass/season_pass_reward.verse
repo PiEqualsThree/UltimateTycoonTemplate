@@ -65,6 +65,7 @@ season_pass_reward<public> := class<concrete>:
         if ( Reward := CosmeticReward?) then { Reward.Reset(); Print("Resetting {RewardTierString} Reward {ID} - Cosmetic Reward")}
         if ( Reward := BlingBucksReward?) then { Reward.Reset(); Print("Resetting {RewardTierString} Reward {ID} - Bling Bucks Reward")}
 
+    SetClaimStatus<public>(RewardClaimStatus : season_pass_reward_claim_status)<transacts> : void = set ClaimStatus = RewardClaimStatus
     GetName<public>()<transacts> : string = Name
     GetImage<public>()<transacts> : texture = Image
     GetTier<public>()<transacts> : reward_tier = Tier
