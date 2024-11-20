@@ -38,6 +38,7 @@ pumpkin_carving_manager<public> := class<concrete>:
     @editable       CustomerDespawnVFX : vfx_spawner_device = vfx_spawner_device{}
     @editable       CustomerSatisfactionVFXDevices : []vfx_spawner_device = array{}
     @editable       CustomerCharacterDevices : []character_device = array{}
+    @editable       NoPumpkinHud : hud_message_device = hud_message_device{}
 
     @editable       ComponentChangeVFX : vfx_spawner_device = vfx_spawner_device{}
     @editable       PumpkinBase : creative_prop = creative_prop{}
@@ -48,18 +49,19 @@ pumpkin_carving_manager<public> := class<concrete>:
     @editable       TutorialSettings : ?pumpkin_carving_tutorial_settings = false
     
     PumpkinUI : pumpkin_carving_ui = pumpkin_carving_ui{}
-    ResetEvent : event() = event(){}
-    PumpkinCarvingBeginEvent : event() = event(){}
-    PumpkinCarvingEndEvent : event() = event(){}
-    PumpkinRestockedEvent : event() = event(){}
+    ResetEvent<public> : event() = event(){}
+    PumpkinCarvingBeginEvent<public> : event() = event(){}
+    PumpkinCarvingEndEvent<public> : event() = event(){}
+    PumpkinRestockedEvent<public> : event() = event(){}
     ScoreWidget : pumpkin_carving_score_widget = pumpkin_carving_score_widget{}
 
-    PumpkinStockQueue : pumpkin_stock_type_queue = pumpkin_stock_type_queue{}
+    PumpkinStockQueue<public> : pumpkin_stock_type_queue = pumpkin_stock_type_queue{}
     ComponentSwitchThrottleTime : float = 0.25
     
     var MaybeOwner : ?custom_player = false
     var CustomerCooldownMaterial : M_Hitbox_Progress_material = M_Hitbox_Progress_material{}
     var DefaultCooldownPropTransform : transform = transform{}
+    var MaxStock<public> : int = 3
 
     var EyeDecals<public> : []creative_prop = array{}
     var MouthDecals<public> : []creative_prop = array{}
@@ -148,7 +150,11 @@ pumpkin_carving_manager<public> := class<concrete>:
         PumpkinStockQueue.Queue(PumpkinType)
         PumpkinRestockedEvent.Signal()
 
-    BeginPumpkinCarving(Owner : custom_player, MetricWeightSheet : [pumpkin_carving_metric]int)<suspends> : void =
+    
+    HireWorker<public>() : void =
+        {}
+
+    BeginPumpkinCarving(Owner : custom_player, PumpkinType : pumpkin_stock_type, MetricWeightSheet : [pumpkin_carving_metric]int)<suspends> : void =
         set AllowComponentChange = true
         InteractButton.Disable()
         PumpkinBase.Show()
@@ -170,6 +176,7 @@ pumpkin_carving_manager<public> := class<concrete>:
         Camera.AddTo(Owner.Agent)
         Owner.FortCharacter.Hide()
         Owner.FortCharacter.SetVulnerability(false)
+        PumpkinCarvingBeginEvent.Signal()
 
     FinishPumpkinCarving(Owner : custom_player, PumpkinCarvingResult : pumpkin_carving_score_result)<suspends> : void =
         Print("Pumpkin score: {PumpkinCarvingResult.Score}")
@@ -202,24 +209,32 @@ pumpkin_carving_manager<public> := class<concrete>:
         set SelectedEyesID = -1
         set SelectedMouthID = -1
         set ShouldShowTutorial = false
-
-    AwaitCollectionEvents()<suspends> : void =
-        {}
+        PumpkinCarvingEndEvent.Signal()
 
     PollPumpkinCarvingEvents(Owner : custom_player)<suspends> : void =
-        loop:
-            Agent := InteractButton.InteractedWithEvent.Await()
-            if ( Owner.Agent = Agent, IsCustomerReady?):
-                # Generates a metric sheet, used for determening score
-                MetricWeightSheet := GenerateMetricWeightSheet()
-                BeginPumpkinCarving(Owner, MetricWeightSheet)
-                AwaitPumpkinCarvingUIEvents(Owner, MetricWeightSheet)
-                Score := CalculatePumpkinCarvingScore(CurrentMetricTotalMap, MetricWeightSheet)
-                FinalResult := pumpkin_carving_score_result:
-                    Score := Score
-                    CashGain :=  60 + (Ceil[(0.55 * 0.01 * Score) * Max(Min(Owner.Candy, 10000000), 400)] or 1) 
-                    CandyGain := 20 + (Ceil[(0.22 * 0.01 * Score) * Max(Min(Owner.Candy, 7500000), 235)] or 1)
-                FinishPumpkinCarving(Owner, FinalResult)
+        sync:
+            loop:
+                Agent := InteractButton.InteractedWithEvent.Await()
+                if ( Owner.Agent = Agent, IsCustomerReady?):
+                    if ( PumpkinType := PumpkinStockQueue.Dequeue()?):
+                        # Generates a metric sheet, used for determening score
+                        MetricWeightSheet := GenerateMetricWeightSheet()
+                        BeginPumpkinCarving(Owner, PumpkinType, MetricWeightSheet)
+                        AwaitPumpkinCarvingUIEvents(Owner, MetricWeightSheet)
+                        Score := CalculatePumpkinCarvingScore(CurrentMetricTotalMap, MetricWeightSheet)
+                        FinalResult := pumpkin_carving_score_result:
+                            Score := Score
+                            CashGain :=  Ceil[GetPumpkinTypeMultiplier(PumpkinType) * Owner.CurrencyMultiplier * (60 + (Ceil[(0.55 * 0.01 * Score) * Max(Min(Owner.Candy, 10000000), 400)] or 1) )] or 1
+                            CandyGain := Ceil[GetPumpkinTypeMultiplier(PumpkinType) * Owner.CurrencyMultiplier * (20 + (Ceil[(0.22 * 0.01 * Score) * Max(Min(Owner.Candy, 7500000), 235)] or 1))] or 1
+                        FinishPumpkinCarving(Owner, FinalResult)
+                    else:
+                        NoPumpkinHud.Show(Owner.Player)
+            loop:
+                Print("Auto carving!")
+                if ( PumpkinType := PumpkinStockQueue.Dequeue()?):
+                    Sleep(5.0)
+                else:
+                    Sleep(1.0)
 
     AwaitCustomerReadyEvents()<suspends> : void =
         loop: <# Spawn Customer Loop #>  
@@ -238,7 +253,6 @@ pumpkin_carving_manager<public> := class<concrete>:
             for ( I := 1..TicksToReady) do {set CustomerCooldownMaterial.Progress = (1.0 * I) / (1.0 * TicksToReady); Sleep(0.0)}
             if ( CustomerCooldownProp.TeleportTo[DefaultCooldownPropTransform.Translation - vector3{ Z := 3000.0}, rotation{}]) {}
             
-
     AwaitPumpkinCarvingUIEvents(Owner : custom_player, MetricWeightSheet : [pumpkin_carving_metric]int)<suspends> : void =
         race:
             ResetEvent.Await()

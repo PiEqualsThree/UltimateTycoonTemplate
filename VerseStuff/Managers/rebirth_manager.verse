@@ -23,7 +23,7 @@ rebirth_manager<public> := class:
         CurrencyMultiplier := Min(1.0 + CustomPlayer.Rebirths * 0.2, 4.0)
         CustomPlayer.SetCurrencyMultiplier(CurrencyMultiplier)
         if ( CustomPlayer.Rebirths = 10) then TycoonManager.CosmeticsManager.UnlockAura(CustomPlayer, 24)
-        if ( CustomPlayer.Rebirths > 0) then TycoonManager.PerksManager.SetPerkLevel(2, Min(CustomPlayer.Rebirths, 10))
+        if ( CustomPlayer.Rebirths > 0) then TycoonManager.PerksManager.SetPerkLevel(1, Min(CustomPlayer.Rebirths, 10))
 
     HandleRebirthButtonInteraction(CustomPlayer : custom_player)<suspends> : logic =
         RewardDataArray := if ( RebirthRewardDataArray := RebirthRewards[CustomPlayer.Rebirths + 1]):

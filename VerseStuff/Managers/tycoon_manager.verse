@@ -58,7 +58,6 @@ tycoon_manager<public> := class(creative_device, resetable):
     var OwnerPosition : vector3 = vector3{}
     var IsOccupied : logic = false
 
-
     UniqueBegin<public>(GameManager : game_manager)<suspends> : void =
         set OriginalStartingPropsContainerTransform = StartingPropsContainer.GetTransform()
         set OriginalClaimMutatorZoneTransform = ClaimMutatorZone.GetTransform()
@@ -327,8 +326,8 @@ tycoon_manager<public> := class(creative_device, resetable):
         Owner.SetRebirths(Owner.Rebirths + 1)
         
         SaveData(Owner, ?ResetTycoonProgress := true)
-        
         ResetTycoon(Owner, GameManager)
+
         Owner.Reset()
         Owner.FortCharacter.ReleaseFromStasis()
         Owner.FortCharacter.SetVulnerability(true)

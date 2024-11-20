@@ -27,8 +27,11 @@ pumpkin_collection_manager<public> := class<concrete>:
     @editable       CollectionButton : button_device = button_device{}
     @editable       CarryingPumpkinVFXPowerups : []visual_effect_powerup_device = array{}
     @editable       CarryingPumpkinHud : hud_message_device = hud_message_device{}
+    @editable       StockFullHud : hud_message_device = hud_message_device{}
     @editable       DropOffButton : button_device = button_device{}
     @editable       VFXClearChannel : channel_device = channel_device{}
+    @editable       PumpkinStockProps : []creative_prop = array{}
+    @editable       PumpkinStockBillboard : billboard_device = billboard_device{}
 
     ResetEvent : event() = event(){}
     AutoCollectEnabledEvent : event() = event(){}
@@ -38,7 +41,14 @@ pumpkin_collection_manager<public> := class<concrete>:
     UniqueBegin() : void =
         {}
 
+    UpdatePumpkinStockVisuals<public>(CurrentStock : int, MaxStock : int) : void =
+        PumpkinStockBillboard.SetText(StringToMessage("Pumpkins:\n{CurrentStock} / {MaxStock}"))
+        PumpkinStockBillboard.UpdateDisplay()
+        for ( I := 0..MaxStock - 1, Prop := PumpkinStockProps[I]):
+            if (I < CurrentStock) then Prop.Show() else Prop.Hide()
+
     LoadData<public>(Owner : custom_player, TycoonManager : tycoon_manager, PumpkinCarvingManager : pumpkin_carving_manager)<suspends> : void =
+        UpdatePumpkinStockVisuals(PumpkinCarvingManager.PumpkinStockQueue.GetSize(), PumpkinCarvingManager.MaxStock)
         spawn{Update(Owner, PumpkinCarvingManager)}
 
     Update(Owner : custom_player, PumpkinCarvingManager : pumpkin_carving_manager)<suspends> : void =
@@ -61,17 +71,28 @@ pumpkin_collection_manager<public> := class<concrete>:
                         Owner.FortCharacter.EliminatedEvent().Await()
                         Sleep(30.0)
                         loop:
-                            DroppingOffAgent := CollectionButton.InteractedWithEvent.Await()
+                            DroppingOffAgent := DropOffButton.InteractedWithEvent.Await()
                             if ( Owner.Agent = DroppingOffAgent):
-                                PumpkinCarvingManager.RestockPumpkin(PumpkinType)
+                                if ( PumpkinCarvingManager.PumpkinStockQueue.GetSize() >= PumpkinCarvingManager.MaxStock):
+                                    StockFullHud.Show(Owner.Player)
+                                    UpdatePumpkinStockVisuals(PumpkinCarvingManager.PumpkinStockQueue.GetSize(), PumpkinCarvingManager.MaxStock)
+                                else:
+                                    PumpkinCarvingManager.RestockPumpkin(PumpkinType)
                                 break
                     CarryingPumpkinHud.Hide(Owner.Agent)
                     VFXClearChannel.Transmit(option{Owner.Agent})
             loop:
                 AutoCollectEnabledEvent.Await()
+
+            loop:
+                PumpkinCarvingManager.PumpkinCarvingBeginEvent.Await()
+                Sleep(0.0)
+                UpdatePumpkinStockVisuals(PumpkinCarvingManager.PumpkinStockQueue.GetSize(), PumpkinCarvingManager.MaxStock)
+
+            loop:
+                PumpkinCarvingManager.PumpkinCarvingEndEvent.Await()
+                UpdatePumpkinStockVisuals(PumpkinCarvingManager.PumpkinStockQueue.GetSize(), PumpkinCarvingManager.MaxStock)
                 
-
-
     AwaitPumpkinHarvest()<suspends> : pumpkin_stock_type =
         pumpkin_stock_type.Good
 

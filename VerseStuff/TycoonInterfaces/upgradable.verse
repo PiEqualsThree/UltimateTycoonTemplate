@@ -21,6 +21,27 @@ upgradable<public> := interface:
 upgradable_building_data<public> := class<concrete>:
     @editable       Price<public> : int = 0
     @editable       PurchaseType<public> : currency_type = currency_type.Cash
+    @editable       ContainerProp<public> : creative_prop = creative_prop{}
     @editable       PurchaseButton<public> : creative_prop = creative_prop{}
     @editable       NextBuildingUnlockIDs<public> : []int = array{}
     @editable       PassiveIncome<public> : passive_income = passive_income{}
+    
+    var DefaultPurchaseButtonTransform : transform = transform{}
+    var DefaultContainerPropTransform : transform = transform{}
+
+    UniqueBegin<public>() : void =
+        set DefaultPurchaseButtonTransform = PurchaseButton.GetTransform()
+        set DefaultContainerPropTransform = ContainerProp.GetTransform()
+
+    ShowPurchaseButton<public>(?PlayAnimations : logic = true) : void =
+        spawn{DoTycoonPopupAnimation(PurchaseButton, DefaultPurchaseButtonTransform, ?PlayAnimations := PlayAnimations)}
+
+    HidePurchaseButton<public>(?PlayAnimations : logic = true) : void =
+        spawn{DoTycoonHideAnimation(PurchaseButton, DefaultPurchaseButtonTransform, ?PlayAnimations := PlayAnimations)}
+
+    ShowContainerProp<public>(?PlayAnimations : logic = true) : void =
+        spawn{DoTycoonPopupAnimation(ContainerProp, DefaultContainerPropTransform, ?PlayAnimations := PlayAnimations)}
+
+    HideContainerProp<public>(?PlayAnimations : logic = true) : void =
+        spawn{DoTycoonHideAnimation(ContainerProp, DefaultContainerPropTransform, ?PlayAnimations := PlayAnimations)}
+    

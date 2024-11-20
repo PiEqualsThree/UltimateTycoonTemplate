@@ -25,7 +25,7 @@ pumpkin_stock_type_queue<public> := class:
         set Array = Array + array{PumpkinType}
         set Size = Size + 1
 
-    Dequeue<public>() : ?pumpkin_stock_type =
+    Dequeue<public>()<transacts> : ?pumpkin_stock_type =
         var MaybePumpkinType : ?pumpkin_stock_type = false
         if ( PumpkinType := Array[0]):  
             set MaybePumpkinType = option{PumpkinType}
@@ -39,7 +39,7 @@ pumpkin_stock_type_queue<public> := class:
 
     GetSize<public>()<transacts> : int = Size
 
-GetPumpkinTypeMultiplier<public>(PumpkinType : pumpkin_stock_type) : float = 
+GetPumpkinTypeMultiplier<public>(PumpkinType : pumpkin_stock_type)<transacts> : float = 
     case(PumpkinType):
         pumpkin_stock_type.Rotten => 0.85
         pumpkin_stock_type.Good => 1.0
