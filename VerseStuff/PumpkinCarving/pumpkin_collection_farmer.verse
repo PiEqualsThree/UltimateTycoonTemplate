@@ -42,7 +42,7 @@ pumpkin_collection_farmer<public> := class<concrete>:
         spawn{Update(PumpkinCarvingManager)} 
 
     Update(PumpkinCarvingManager : pumpkin_carving_manager)<suspends> : void =
-        loop:
+        race:
             ResetEvent.Await()
             PollCollectionEvents(PumpkinCarvingManager)
 

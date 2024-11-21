@@ -43,7 +43,7 @@ pumpkin_carving_worker<public> := class<concrete>:
         spawn{Update(Owner, TycoonManager, PumpkinCarvingManager)} 
 
     Update(Owner : custom_player, TycoonManager : tycoon_manager, PumpkinCarvingManager : pumpkin_carving_manager)<suspends> : void =
-        loop:
+        race:
             ResetEvent.Await()
             PollCollectionEvents(Owner, TycoonManager, PumpkinCarvingManager)
 
