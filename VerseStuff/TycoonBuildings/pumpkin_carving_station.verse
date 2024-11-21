@@ -28,6 +28,7 @@ pumpkin_carving_station<public> := class<concrete>(tycoon_building, upgradable, 
         for ( Data : UpgradeData) do Data.UniqueBegin()
         spawn{ PumpkinCarvingManager.UniqueBegin() }
         PumpkinCollectionFarmer.UniqueBegin()
+        PumpkinCarvingWorker.UniqueBegin()
         
     Init<override>(TycoonManager : tycoon_manager) : void =
         PumpkinCarvingManager.Init(TycoonManager)

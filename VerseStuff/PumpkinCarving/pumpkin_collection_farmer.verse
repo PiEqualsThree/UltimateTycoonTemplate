@@ -57,6 +57,7 @@ pumpkin_collection_farmer<public> := class<concrete>:
                 for ( I := 1..CollectionIntervals):
                     Progress := (1.0 * I ) / CollectionIntervalsF
                     set ProgressMaterial.Progress = Progress
+                    Sleep(0.0)
                 if ( PumpkinCarvingManager.PumpkinStockQueue.GetSize() < PumpkinCarvingManager.MaxStock):
                     PumpkinCarvingManager.RestockPumpkin(pumpkin_stock_type.Good)
                     CharacterDevice.PlayEmote()
@@ -65,7 +66,7 @@ pumpkin_collection_farmer<public> := class<concrete>:
                 else:
                     FarmingBillboard.SetText(StockFullMessage)
                     FarmingBillboard.UpdateDisplay()
-                    
+
                 Sleep(2.0)
             else:
                 FarmingBillboard.SetText(StockFullMessage)

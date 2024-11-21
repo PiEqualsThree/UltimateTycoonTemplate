@@ -40,7 +40,7 @@ player_stats<public> := class<final><persistable>:
 
 tycoon_currency_stats<public> := class<final><persistable>:
     Cash<public> : int = 100000
-    Candy<public> : int = 10000
+    Candy<public> : int = 15000
     Rebirths<public> : int = 0
     BlingBucks<public> : int = 0
 

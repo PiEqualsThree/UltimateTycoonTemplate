@@ -58,6 +58,7 @@ pumpkin_carving_worker<public> := class<concrete>:
                 for ( I := 1..WorkingIntervals):
                     Progress := (1.0 * I ) / WorkingIntervalsF
                     set ProgressMaterial.Progress = Progress
+                    Sleep(0.0)
                 CharacterDevice.PlayEmote()
                 CashGain := currency_transaction{Amount := Ceil[GetPumpkinTypeMultiplier(Stock) * Owner.CurrencyMultiplier * Owner.Candy * 0.005] or 1, Type := currency_type.Cash}
                 CandyGain := currency_transaction{Amount := Ceil[GetPumpkinTypeMultiplier(Stock) * Owner.CurrencyMultiplier * Owner.Candy * 0.001] or 1, Type := currency_type.Candy}
