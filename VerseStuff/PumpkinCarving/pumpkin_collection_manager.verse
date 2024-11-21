@@ -34,10 +34,9 @@ pumpkin_collection_manager<public> := class<concrete>:
     @editable       PumpkinStockBillboard : billboard_device = billboard_device{}
 
     ResetEvent : event() = event(){}
-    AutoCollectEnabledEvent : event() = event(){}
-    RottenPumpkinMessage<localizes> : message = "Rotten Pumpkin"
-    GoodPumpkinMessage<localizes> : message = "Good Pumpkin"
-    PerfectPumpkinMessage<localizes> : message = "Perfect Pumpkin"
+    RottenPumpkinMessage<localizes> : message = "Carrying Rotten Pumpkin"
+    GoodPumpkinMessage<localizes> : message = "Carrying Good Pumpkin"
+    PerfectPumpkinMessage<localizes> : message = "Carrying Perfect Pumpkin"
 
     var IsHoldingPumpkin : logic = false
 
@@ -80,15 +79,12 @@ pumpkin_collection_manager<public> := class<concrete>:
                             if ( Owner.Agent = DroppingOffAgent):
                                 if ( PumpkinCarvingManager.PumpkinStockQueue.GetSize() >= PumpkinCarvingManager.MaxStock):
                                     StockFullHud.Show(Owner.Player)
-                                    UpdatePumpkinStockVisuals(PumpkinCarvingManager.PumpkinStockQueue.GetSize(), PumpkinCarvingManager.MaxStock)
                                 else:
                                     PumpkinCarvingManager.RestockPumpkin(PumpkinType)
+                                    UpdatePumpkinStockVisuals(PumpkinCarvingManager.PumpkinStockQueue.GetSize(), PumpkinCarvingManager.MaxStock)
                                 break
                     CarryingPumpkinHud.Hide(Owner.Agent)
                     VFXClearChannel.Transmit(option{Owner.Agent})
-            loop:
-                AutoCollectEnabledEvent.Await()
-
             loop:
                 PumpkinCarvingManager.PumpkinCarvingBeginEvent.Await()
                 Sleep(0.0)

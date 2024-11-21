@@ -208,30 +208,23 @@ pumpkin_carving_manager<public> := class<concrete>:
         PumpkinCarvingEndEvent.Signal()
 
     PollPumpkinCarvingEvents(Owner : custom_player)<suspends> : void =
-        sync:
-            loop:
-                Agent := InteractButton.InteractedWithEvent.Await()
-                if ( Owner.Agent = Agent, IsCustomerReady?):
-                    if ( PumpkinType := PumpkinStockQueue.Dequeue()?):
-                        # Generates a metric sheet, used for determening score
-                        MetricWeightSheet := GenerateMetricWeightSheet()
-                        BeginPumpkinCarving(Owner, PumpkinType, MetricWeightSheet)
-                        AwaitPumpkinCarvingUIEvents(Owner, MetricWeightSheet)
-                        Score := CalculatePumpkinCarvingScore(CurrentMetricTotalMap, MetricWeightSheet)
-                        FinalResult := pumpkin_carving_score_result:
-                            Score := Score
-                            CashGain :=  Ceil[GetPumpkinTypeMultiplier(PumpkinType) * Owner.CurrencyMultiplier * (60 + (Ceil[(0.55 * 0.01 * Score) * Max(Min(Owner.Candy, 10000000), 400)] or 1) )] or 1
-                            CandyGain := Ceil[GetPumpkinTypeMultiplier(PumpkinType) * Owner.CurrencyMultiplier * (20 + (Ceil[(0.22 * 0.01 * Score) * Max(Min(Owner.Candy, 7500000), 235)] or 1))] or 1
-                        FinishPumpkinCarving(Owner, FinalResult)
-                    else:
-                        NoPumpkinHud.Show(Owner.Player)
-            loop:
-                Print("Auto carving!")
+        loop:
+            Agent := InteractButton.InteractedWithEvent.Await()
+            if ( Owner.Agent = Agent, IsCustomerReady?):
                 if ( PumpkinType := PumpkinStockQueue.Dequeue()?):
-                    Sleep(5.0)
+                    # Generates a metric sheet, used for determening score
+                    MetricWeightSheet := GenerateMetricWeightSheet()
+                    BeginPumpkinCarving(Owner, PumpkinType, MetricWeightSheet)
+                    AwaitPumpkinCarvingUIEvents(Owner, MetricWeightSheet)
+                    Score := CalculatePumpkinCarvingScore(CurrentMetricTotalMap, MetricWeightSheet)
+                    FinalResult := pumpkin_carving_score_result:
+                        Score := Score
+                        CashGain :=  Ceil[GetPumpkinTypeMultiplier(PumpkinType) * Owner.CurrencyMultiplier * (60 + (Ceil[(0.55 * 0.01 * Score) * Max(Min(Owner.Candy, 10000000), 400)] or 1) )] or 1
+                        CandyGain := Ceil[GetPumpkinTypeMultiplier(PumpkinType) * Owner.CurrencyMultiplier * (20 + (Ceil[(0.22 * 0.01 * Score) * Max(Min(Owner.Candy, 7500000), 235)] or 1))] or 1
+                    FinishPumpkinCarving(Owner, FinalResult)
                 else:
-                    Sleep(1.0)
-
+                    NoPumpkinHud.Show(Owner.Player)
+                    
     AwaitCustomerReadyEvents()<suspends> : void =
         loop: <# Spawn Customer Loop #>  
             # Ready Event
