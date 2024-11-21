@@ -68,8 +68,8 @@ pumpkin_carving_manager<public> := class<concrete>:
     var CurrentEyeDecal : ?creative_prop = false
     var CurrentMouthDecal : ?creative_prop = false
 
+    var IsCustomerReady<public> : logic = false
     var ShouldShowTutorial : logic = false
-    var IsCustomerReady : logic = false
     var AllowComponentChange : logic = true
     var CurrentCharacterDevice : character_device = character_device{}
     var CurrentSatisfactionVFX : vfx_spawner_device = vfx_spawner_device{}
@@ -149,10 +149,6 @@ pumpkin_carving_manager<public> := class<concrete>:
     RestockPumpkin<public>(PumpkinType : pumpkin_stock_type) : void =
         PumpkinStockQueue.Queue(PumpkinType)
         PumpkinRestockedEvent.Signal()
-
-    
-    HireWorker<public>() : void =
-        {}
 
     BeginPumpkinCarving(Owner : custom_player, PumpkinType : pumpkin_stock_type, MetricWeightSheet : [pumpkin_carving_metric]int)<suspends> : void =
         set AllowComponentChange = true

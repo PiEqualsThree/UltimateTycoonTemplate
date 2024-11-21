@@ -35,6 +35,9 @@ pumpkin_collection_manager<public> := class<concrete>:
 
     ResetEvent : event() = event(){}
     AutoCollectEnabledEvent : event() = event(){}
+    RottenPumpkinMessage<localizes> : message = "Rotten Pumpkin"
+    GoodPumpkinMessage<localizes> : message = "Good Pumpkin"
+    PerfectPumpkinMessage<localizes> : message = "Perfect Pumpkin"
 
     var IsHoldingPumpkin : logic = false
 
@@ -63,8 +66,10 @@ pumpkin_collection_manager<public> := class<concrete>:
                 if ( Owner.Agent = Agent):
                     <# Pick up pumpkin #>
                     PumpkinType := AwaitPumpkinHarvest()
-                    PumpkinVFX := case(PumpkinType) { pumpkin_stock_type.Rotten => CarryingPumpkinVFXPowerups[0], pumpkin_stock_type.Good => CarryingPumpkinVFXPowerups[1], pumpkin_stock_type.Perfect => CarryingPumpkinVFXPowerups[2]} or visual_effect_powerup_device{}
-                    PumpkinVFX.Pickup(Owner.Player)
+                    case(PumpkinType):
+                        pumpkin_stock_type.Rotten => {CarryingPumpkinHud.SetText(RottenPumpkinMessage); if ( PumpkinVFX := CarryingPumpkinVFXPowerups[0]) then PumpkinVFX.Pickup(Owner.Player)}
+                        pumpkin_stock_type.Good => {CarryingPumpkinHud.SetText(GoodPumpkinMessage); if ( PumpkinVFX := CarryingPumpkinVFXPowerups[1]) then PumpkinVFX.Pickup(Owner.Player)}
+                        pumpkin_stock_type.Perfect => {CarryingPumpkinHud.SetText(PerfectPumpkinMessage); if ( PumpkinVFX := CarryingPumpkinVFXPowerups[2]) then PumpkinVFX.Pickup(Owner.Player)}
                     CarryingPumpkinHud.Show(Owner.Player)
                     race:
                         ResetEvent.Await()
@@ -95,9 +100,6 @@ pumpkin_collection_manager<public> := class<concrete>:
                 
     AwaitPumpkinHarvest()<suspends> : pumpkin_stock_type =
         pumpkin_stock_type.Good
-
-    EnableAutoCollect<public>() : void =
-        AutoCollectEnabledEvent.Signal()
 
     Reset<public> () : void =
         {}

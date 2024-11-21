@@ -11,8 +11,9 @@ pumpkin_carving_station<public> := class<concrete>(tycoon_building, upgradable, 
     @editable       ID : int = 0
     @editable       UpgradeData : []upgradable_building_data = array{}
     @editable       PumpkinCarvingManager<public> : pumpkin_carving_manager = pumpkin_carving_manager{}
+    @editable       PumpkinCarvingWorker<public> : pumpkin_carving_worker = pumpkin_carving_worker{}
     @editable       PumpkinCollectionManager<public> : pumpkin_collection_manager = pumpkin_collection_manager{}
-    @editable       UseBuildAnimation : logic = true
+    @editable       PumpkinCollectionFarmer<public> : pumpkin_collection_farmer = pumpkin_collection_farmer{}
     @editable       TycoonCinematic : ?tycoon_cinematic = false
 
     BuildingResetEvent : event() = event(){}
@@ -26,6 +27,7 @@ pumpkin_carving_station<public> := class<concrete>(tycoon_building, upgradable, 
     UniqueBegin<override>() : void =
         for ( Data : UpgradeData) do Data.UniqueBegin()
         spawn{ PumpkinCarvingManager.UniqueBegin() }
+        PumpkinCollectionFarmer.UniqueBegin()
         
     Init<override>(TycoonManager : tycoon_manager) : void =
         PumpkinCarvingManager.Init(TycoonManager)
@@ -35,6 +37,7 @@ pumpkin_carving_station<public> := class<concrete>(tycoon_building, upgradable, 
     Reset<override>() : void =
         set PurchaseStatus = purchase_status.Locked
         PumpkinCarvingManager.Reset()
+        PumpkinCollectionFarmer.Reset()
         ResetEvent().Signal()
         
     Unlock<override>(Owner : custom_player, ?PlayAnimations : logic = true) : void =
@@ -54,8 +57,19 @@ pumpkin_carving_station<public> := class<concrete>(tycoon_building, upgradable, 
                 Data.ShowPurchaseButton()
 
         else if ( CurrentLevel = 1):
-            PumpkinCollectionManager.EnableAutoCollect()
-            if ( Data := UpgradeData[1]) then Data.HidePurchaseButton()
+            PumpkinCollectionFarmer.Init(PumpkinCarvingManager)
+            if ( Data := UpgradeData[1]):
+                Data.HidePurchaseButton(?PlayAnimations := PlayAnimations)
+                Data.ShowContainerProp(?PlayAnimations := PlayAnimations)
+            if ( Data := UpgradeData[2]):
+                Data.ShowPurchaseButton()
+        
+        else if ( CurrentLevel = 2, TycoonManager := Owner.MaybeTycoonManager?):
+            PumpkinCarvingWorker.Init(Owner, TycoonManager, PumpkinCarvingManager)
+            if ( Data := UpgradeData[1]):
+                Data.HidePurchaseButton(?PlayAnimations := PlayAnimations)
+                Data.ShowContainerProp(?PlayAnimations := PlayAnimations)
+
         set CurrentLevel = CurrentLevel + 1            
         BuildingPurchasedEvent.Signal()
 
