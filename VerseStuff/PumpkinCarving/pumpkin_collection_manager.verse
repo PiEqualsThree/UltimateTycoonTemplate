@@ -34,6 +34,9 @@ pumpkin_collection_manager<public> := class<concrete>:
     @editable       PumpkinStockBillboard : billboard_device = billboard_device{}
 
     ResetEvent : event() = event(){}
+    PumpkinCollectedEvent : event() = event(){}
+    PumpkinDroppedOffEvent : event() = event(){}
+
     RottenPumpkinMessage<localizes> : message = "Carrying Rotten Pumpkin"
     GoodPumpkinMessage<localizes> : message = "Carrying Good Pumpkin"
     PerfectPumpkinMessage<localizes> : message = "Carrying Perfect Pumpkin"
@@ -59,10 +62,16 @@ pumpkin_collection_manager<public> := class<concrete>:
             AwaitCollectionEvents(Owner, PumpkinCarvingManager)
 
     AwaitCollectionEvents(Owner : custom_player, PumpkinCarvingManager : pumpkin_carving_manager)<suspends> : void =
+        Sleep(0.25)
+        if ( PumpkinCarvingManager.ShouldShowTutorial?, Settings := PumpkinCarvingManager.TutorialSettings?):
+            spawn{ Settings.QueueDisplayPumpkinCollectionTutorial(Owner, PumpkinCollectedEvent, ?DelayTime := 1.0) }
         sync:
             loop:
                 Agent := CollectionButton.InteractedWithEvent.Await()
                 if ( Owner.Agent = Agent):
+                    PumpkinCollectedEvent.Signal()
+                    if ( PumpkinCarvingManager.ShouldShowTutorial?, Settings := PumpkinCarvingManager.TutorialSettings?):
+                        spawn{ Settings.QueueDisplayDropOffTutorial(Owner, PumpkinDroppedOffEvent, ?DelayTime := 0.0) }
                     <# Pick up pumpkin #>
                     PumpkinType := AwaitPumpkinHarvest()
                     case(PumpkinType):
@@ -79,9 +88,12 @@ pumpkin_collection_manager<public> := class<concrete>:
                             if ( Owner.Agent = DroppingOffAgent):
                                 if ( PumpkinCarvingManager.PumpkinStockQueue.GetSize() >= PumpkinCarvingManager.MaxStock):
                                     StockFullHud.Show(Owner.Player)
-                                else:
+                                else: <# Drop off pumpkin #>
                                     PumpkinCarvingManager.RestockPumpkin(PumpkinType)
                                     UpdatePumpkinStockVisuals(PumpkinCarvingManager.PumpkinStockQueue.GetSize(), PumpkinCarvingManager.MaxStock)
+                                    PumpkinDroppedOffEvent.Signal()
+                                    if ( PumpkinCarvingManager.ShouldShowTutorial?, Settings := PumpkinCarvingManager.TutorialSettings?):
+                                        spawn{ Settings.QueueCarvingTutorial(Owner, PumpkinCarvingManager.PumpkinCarvingBeginEvent, ?DelayTime := 0.0) }
                                 break
                     CarryingPumpkinHud.Hide(Owner.Agent)
                     VFXClearChannel.Transmit(option{Owner.Agent})
@@ -92,6 +104,9 @@ pumpkin_collection_manager<public> := class<concrete>:
 
             loop:
                 PumpkinCarvingManager.PumpkinCarvingEndEvent.Await()
+                UpdatePumpkinStockVisuals(PumpkinCarvingManager.PumpkinStockQueue.GetSize(), PumpkinCarvingManager.MaxStock)
+            loop:
+                PumpkinCarvingManager.PumpkinRestockedEvent.Await()
                 UpdatePumpkinStockVisuals(PumpkinCarvingManager.PumpkinStockQueue.GetSize(), PumpkinCarvingManager.MaxStock)
                 
     AwaitPumpkinHarvest()<suspends> : pumpkin_stock_type =

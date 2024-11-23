@@ -33,7 +33,6 @@ pumpkin_carving_manager<public> := class<concrete>:
     @editable       ScoreStarAudios<public> : []audio_player_device = array{}
 
     @editable       CustomerCooldownProp : creative_prop = creative_prop{}
-    @editable       CustomerReadyBeacon : beacon_device = beacon_device{}
     @editable       CustomerSpawnVFX : vfx_spawner_device = vfx_spawner_device{}
     @editable       CustomerDespawnVFX : vfx_spawner_device = vfx_spawner_device{}
     @editable       CustomerSatisfactionVFXDevices : []vfx_spawner_device = array{}
@@ -46,7 +45,7 @@ pumpkin_carving_manager<public> := class<concrete>:
     @editable       EyeDecalAssets : []creative_prop_asset = array{}
     @editable       MouthDecalAssets : []creative_prop_asset = array{}
 
-    @editable       TutorialSettings : ?pumpkin_carving_tutorial_settings = false
+    @editable       TutorialSettings<public> : ?pumpkin_carving_tutorial_settings = false
     
     PumpkinUI : pumpkin_carving_ui = pumpkin_carving_ui{}
     ResetEvent<public> : event() = event(){}
@@ -69,7 +68,7 @@ pumpkin_carving_manager<public> := class<concrete>:
     var CurrentMouthDecal : ?creative_prop = false
 
     var IsCustomerReady<public> : logic = false
-    var ShouldShowTutorial : logic = false
+    var ShouldShowTutorial<public> : logic = false
     var AllowComponentChange : logic = true
     var CurrentCharacterDevice : character_device = character_device{}
     var CurrentSatisfactionVFX : vfx_spawner_device = vfx_spawner_device{}
@@ -128,12 +127,13 @@ pumpkin_carving_manager<public> := class<concrete>:
         Shop.Init()
 
     LoadData<public>(Owner : custom_player, TycoonManager : tycoon_manager, PlayerStats : player_stats)<suspends> : void =
+        set MaybeOwner = option{Owner}
+        set ShouldShowTutorial = logic{Owner.Rebirths = 0 and Owner.TycoonLevel.GetLevel() <= 3}
         for ( ID : PlayerStats.PumpkinCarvingStats.UnlockedMaterialIDs) do UnlockColor(ID)
+        Sleep(0.0)
         for ( ID : PlayerStats.PumpkinCarvingStats.UnlockedTopIDs) do UnlockTop(ID)
         for ( ID : PlayerStats.PumpkinCarvingStats.UnlockedEyeIDs) do UnlockEyes(ID)
         for ( ID : PlayerStats.PumpkinCarvingStats.UnlockedMouthIDs) do UnlockMouth(ID)
-        set MaybeOwner = option{Owner}
-        set ShouldShowTutorial = logic{Owner.Rebirths = 0 and Owner.TycoonLevel.GetLevel() <= 3}
         Sleep(0.0)
         for ( Device : CustomerCharacterDevices) do Device.Hide()
         Shop.LoadData(Owner, Self)
@@ -155,7 +155,6 @@ pumpkin_carving_manager<public> := class<concrete>:
         InteractButton.Disable()
         PumpkinBase.Show()
         PumpkinTop.Show()
-        CustomerReadyBeacon.Disable()
         PumpkinUI.Display(Owner)
         PumpkinUI.UpdateComponentPage(Self, PumpkinUI.CurrentComponentPageIndex)
         UpdateColorComponent(SelectedColorID)
@@ -164,8 +163,8 @@ pumpkin_carving_manager<public> := class<concrete>:
         UpdateMouthComponent(SelectedMouthID)
         UpdateMetricTotalMap()
         if ( ShouldShowTutorial?, Settings := TutorialSettings?):
-            Settings.DecorateHud.Show(Owner.Player)
-            spawn{ Settings.QueueDisplayCustomerTutorial(Owner)}
+            spawn{ Settings.QueueDisplayDecorateTutorial(Owner, ?DelayTime := 0.0) }
+            spawn{ Settings.QueueDisplayCustomerTutorial(Owner, ?DelayTime := 5.5) }
         else:
             DisplayCurrentScoreFeedback(CurrentMetricTotalMap, MetricWeightSheet)
 
@@ -188,8 +187,6 @@ pumpkin_carving_manager<public> := class<concrete>:
         if ( A := AccoladesArray[0]) then A.Award(Owner.Player)
         Sleep(1.0)
         CustomerDespawnVFX.Restart()
-        CustomerReadyBeacon.Disable()
-        CurrentCharacterDevice.Hide()
         PumpkinCarvingEndEvent.Signal()
         if ( TycoonManager := Owner.MaybeTycoonManager?):
             CashTransaction := currency_transaction{Amount := PumpkinCarvingResult.CashGain, Type := currency_type.Cash}
@@ -199,7 +196,7 @@ pumpkin_carving_manager<public> := class<concrete>:
             Sleep(1.25)
             TycoonManager.UIManager.DisplayIncomeGain(Owner, CandyTransaction)
             TycoonManager.CurrencyManager.IncreaseCurrency(Owner, CandyTransaction)
-        if ( ShouldShowTutorial?, Settings := TutorialSettings?) then spawn{ Settings.QueueDisplayShopTutorial(Owner) }
+        if ( ShouldShowTutorial?, Settings := TutorialSettings?) then spawn{ Settings.QueueDisplayShopTutorial(Owner, ?DelayTime := 1.0) }
         set SelectedColorID = 0
         set SelectedTopID = -1
         set SelectedEyesID = -1
@@ -232,12 +229,11 @@ pumpkin_carving_manager<public> := class<concrete>:
             set CurrentCharacterDevice = CustomerCharacterDevices[GetRandomInt(0, CustomerCharacterDevices.Length - 1)] or CurrentCharacterDevice   
             InteractButton.Enable() 
             CustomerSpawnVFX.Restart()
-            CustomerReadyBeacon.Enable()
             CurrentCharacterDevice.Show()
             CurrentCharacterDevice.PlayEmote()
             PumpkinCarvingEndEvent.Await()
 
-            TicksToReady : int = GetRandomInt(30, 275)
+            TicksToReady : int = GetRandomInt(30, 100)
             if ( CustomerCooldownProp.TeleportTo[DefaultCooldownPropTransform]) {}
             for ( I := 1..TicksToReady) do {set CustomerCooldownMaterial.Progress = (1.0 * I) / (1.0 * TicksToReady); Sleep(0.0)}
             if ( CustomerCooldownProp.TeleportTo[DefaultCooldownPropTransform.Translation - vector3{ Z := 3000.0}, rotation{}]) {}
@@ -388,6 +384,7 @@ pumpkin_carving_manager<public> := class<concrete>:
         set SelectedMouthID = -1
        
         PumpkinStockQueue.Reset() 
+        PumpkinUI.Reset()
         for ( Device : CustomerCharacterDevices) do Device.Hide()
         for ( Decal : EyeDecals) do Decal.Hide()
         for ( Decal : MouthDecals) do Decal.Hide()
@@ -561,20 +558,6 @@ pumpkin_carving_component_widget := class:
     Show<public>() : void = RootWidget.SetVisibility(widget_visibility.Visible)
     Hide<public>() : void = RootWidget.SetVisibility(widget_visibility.Hidden)
     GetRootWidget()<transacts> : widget = RootWidget
-
-pumpkin_carving_tutorial_settings<public> := class<concrete>:
-    @editable       ShopHud : hud_message_device = hud_message_device{}
-    @editable       ShopCinematic : cinematic_sequence_device = cinematic_sequence_device{}
-    @editable       DecorateHud : hud_message_device = hud_message_device{}
-    @editable       CustomerHud : hud_message_device = hud_message_device{}
-
-    QueueDisplayCustomerTutorial(CustomPlayer : custom_player)<suspends> : void =
-        Sleep(5.5)
-        CustomerHud.Show(CustomPlayer.Player)
-
-    QueueDisplayShopTutorial(CustomPlayer : custom_player)<suspends> : void =
-        ShopCinematic.Play(CustomPlayer.Player)
-        ShopHud.Show(CustomPlayer.Player)
 
 using { PumpkinStuff.PumpkinMaterials}
 PumpkinTopMeshes<public> : []mesh = array:
