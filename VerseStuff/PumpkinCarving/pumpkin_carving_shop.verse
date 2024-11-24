@@ -288,7 +288,13 @@ pumpkin_carving_shop<public> := class<concrete>:
             _ => -1
         
     Reset() : void =
+        set AvailableMaterialIDs = array{}
+        set AvailableTopIDs = array{}
+        set AvailableEyeIDs = array{}
+        set AvailableMouthIDs = array{}
         set AllowComponentChange = true
+        set CurrentComponentPage = 0
+        set CurrentComponentIndex = 0
         ResetEvent.Signal()
 
 pumpkin_carving_shop_ui := class:

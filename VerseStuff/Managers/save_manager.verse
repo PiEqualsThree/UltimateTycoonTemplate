@@ -70,9 +70,12 @@ save_manager<public> := class:
         Sleep(0.0)
         TycoonManager.SeasonPassBuilding.TycoonSeasonPass.GetStats()
 
-    GetPumpkinCarvingStats(TycoonManager : tycoon_manager)<suspends> : pumpkin_carving_stats =
+    GetPumpkinCarvingStats(CustomPlayer : custom_player, TycoonManager : tycoon_manager)<suspends> : pumpkin_carving_stats =
         Sleep(0.0)
-        TycoonManager.PumpkinCarvingStation.PumpkinCarvingManager.GetStats()
+        if ( TycoonManager.PumpkinCarvingStation.GetCurrentLevel() > 0):
+            TycoonManager.PumpkinCarvingStation.PumpkinCarvingManager.GetStats()
+        else:
+            TycoonManager.PlayerStatsManager.GetStats(CustomPlayer.Player).PumpkinCarvingStats
 
     GetPlayerStats(Owner : custom_player, TycoonManager : tycoon_manager, ?ShouldResetTycoonStats : logic)<suspends> : player_stats =
         LevelStats := GetLevelStats(Owner)
@@ -81,7 +84,7 @@ save_manager<public> := class:
         CosmeticStats := GetCosmeticStats(TycoonManager)
         BuildingStats := GetBuildingStats(TycoonManager, ShouldResetTycoonStats)
         SeasonPassStats := GetSeasonPassStats(TycoonManager)
-        PumpkinCarvingStats := GetPumpkinCarvingStats(TycoonManager)
+        PumpkinCarvingStats := GetPumpkinCarvingStats(Owner, TycoonManager)
         player_stats:
             LevelStats := LevelStats
             CurrencyStats := CurrencyStats
@@ -95,5 +98,5 @@ save_manager<public> := class:
     IsBuildingUnlocked(TycoonBuilding : tycoon_building)<transacts><decides> : void = UnlockedBuildingIDMap[TycoonBuilding.GetID()]
     IsBuildingUpgraded(TycoonBuilding : tycoon_building)<transacts><decides> : void = UpgradableBuildingLevelMap[TycoonBuilding.GetID()]
 
-    ValidateSaveFile<public>(PlayerStats : player_stats) : player_stats = 
-        player_stats{}
+    # ValidateSaveFile<public>(PlayerStats : player_stats) : player_stats = 
+    #     player_stats{}

@@ -40,11 +40,9 @@ game_manager<public> := class(creative_device):
         MazeManager.Init(CurrencyManager, UIManager)
         BossManager.Init(CurrencyManager, PlayerManager, UIManager, PVPManager)
         CosmeticShop.Init(PlayerManager, CurrencyManager)
-        ScoreboardManager.Init(PlayerManager)
+        ScoreboardManager.Init(Self)
         ZombieManager.Init(PlayerManager, CurrencyManager, UIManager)
-        ScoreboardManager.Init(PlayerManager)
         VaultManager.Init(PlayerManager)
-        VIPManager.Init(PlayerManager)
         PVPManager.Init(PlayerManager)
         for ( CustomPlayer : PlayerManager.GetCustomPlayers()) do spawn { PollInitNewPlayer(CustomPlayer)}
         for ( TycoonManager : TycoonManagers) do spawn{  BeginTycoonManager(TycoonManager) }
@@ -56,7 +54,6 @@ game_manager<public> := class(creative_device):
 
     Update()<suspends> : void =
         sync:
-            Sleep(Inf)
             loop:
                 CustomPlayer := PlayerManager.CustomPlayerAddedEvent.Await()
                 spawn{PollInitNewPlayer(CustomPlayer)}
@@ -67,4 +64,5 @@ game_manager<public> := class(creative_device):
                 
     PollInitNewPlayer(CustomPlayer : custom_player)<suspends> : void =
         CustomPlayer.UniqueBegin(TycoonLevelSettings)
+        ScoreboardManager.RefreshLeaderboardWidgets(PlayerManager.CustomPlayers)
 

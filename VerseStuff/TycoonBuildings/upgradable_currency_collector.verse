@@ -22,7 +22,6 @@ upgradable_currency_collector<public> := class<concrete>(tycoon_building, upgrad
     var CashPerSecond : int = 0
     var CandyPerSecond : int = 0
     var StoredCash<public> : int = 0
-    # Maybe an XP thing here
 
     var CurrentLevel : int = 0
 
@@ -110,8 +109,7 @@ upgradable_currency_collector<public> := class<concrete>(tycoon_building, upgrad
                     PurchaseResult := TycoonManager.TycoonBuildingPurchasedEvent.Await()
                     if ( PurchaseResult.TycoonBuildingID = UpgradeBuildingIDRequired):
                         AutoCollectBuilding.Unlock(Owner)
-
-
+                        
     AddPassiveIncome<public>(Owner : custom_player, CurrencyManager : currency_manager, IncomeGain : passive_income) : void =
         set CashPerSecond = CashPerSecond + CurrencyManager.GetCustomPlayerCurrencyGain(Owner, IncomeGain.Cash)
         set CandyPerSecond = CandyPerSecond + CurrencyManager.GetCustomPlayerCurrencyGain(Owner, IncomeGain.Candy)
