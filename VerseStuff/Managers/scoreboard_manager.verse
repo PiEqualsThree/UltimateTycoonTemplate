@@ -19,9 +19,10 @@ scoreboard_manager<public> := class:
     var CustomPlayerScoreboardWidgetMap : [custom_player]scoreboard_widget = map{}
     var ActiveCustomPlayers : []custom_player = array{}
 
-    Init<public>(PlayerManager : player_manager) : void =
-        for ( CustomPlayer : PlayerManager.GetCustomPlayers()) do InitPlayer(CustomPlayer)
-        spawn{Update(PlayerManager)}
+    Init<public>(GameManager : game_manager) : void =
+        for ( CustomPlayer : GameManager.PlayerManager.GetCustomPlayers()) do InitPlayer(CustomPlayer)
+        for ( TycoonManager : GameManager.TycoonManagers) do spawn { AwaitTycoonClaim(TycoonManager)}
+        spawn{Update(GameManager.PlayerManager)}
   
     InitPlayer<public>(CustomPlayer : custom_player) : void =
         if ( not ActiveCustomPlayers.Find[CustomPlayer]):
@@ -76,6 +77,10 @@ scoreboard_manager<public> := class:
             loop:
                 CustomPlayer := PlayerManager.CustomPlayerRemovedEvent.Await()
                 RemovePlayer(CustomPlayer)
+
+    AwaitTycoonClaim(TycoonManager : tycoon_manager)<suspends> : void =
+        TycoonManager.ClaimedEvent.Await()
+        RefreshLeaderboardWidgets(ActiveCustomPlayers)
 
     RefreshLeaderboardWidgets(CustomPlayers : []custom_player) : void =
         SortedPlayers := MergeSort(CustomPlayers, CompareCustomPlayerLevel)

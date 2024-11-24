@@ -81,6 +81,9 @@ pumpkin_carving_tutorial_settings<public> := class<concrete>:
     QueueDisplayDecorateTutorial<public>(CustomPlayer : custom_player, ?DelayTime : float = 0.0)<suspends> : void =
         CustomPlayer.FortCharacter.SetVulnerability(false)
         Sleep(DelayTime)
+        DecorateHud.Show(CustomPlayer.Player)
+        Sleep(5.0)
+        DecorateHud.Hide(CustomPlayer.Player)
         CustomPlayer.FortCharacter.SetVulnerability(true)
 
     QueueDisplayCustomerTutorial<public>(CustomPlayer : custom_player, ?DelayTime : float = 0.0)<suspends> : void =
@@ -93,7 +96,7 @@ pumpkin_carving_tutorial_settings<public> := class<concrete>:
         CustomPlayer.FortCharacter.SetVulnerability(false)
         Sleep(DelayTime)
         PumpkinShopCamera.AddTo(CustomPlayer.Player)
+        ShopHud.Show(CustomPlayer.Player)
         Sleep(2.5)
         PumpkinShopCamera.RemoveFrom(CustomPlayer.Player)
-        ShopHud.Show(CustomPlayer.Player)
         CustomPlayer.FortCharacter.SetVulnerability(true)

@@ -45,6 +45,7 @@ pumpkin_carving_station<public> := class<concrete>(tycoon_building, upgradable, 
                 if ( PumpkinCarvingCounter = 5, Data := UpgradeData[1]) then Data.ShowPurchaseButton(?PlayAnimations := true)
                 if ( PumpkinCarvingCounter = 15, Data := UpgradeData[2]) then Data.ShowPurchaseButton(?PlayAnimations := true)
     Reset<override>() : void =
+        set CurrentLevel = 0
         set PurchaseStatus = purchase_status.Locked
         PumpkinCarvingManager.Reset()
         PumpkinCollectionFarmer.Reset()
@@ -71,8 +72,6 @@ pumpkin_carving_station<public> := class<concrete>(tycoon_building, upgradable, 
             if ( Data := UpgradeData[1]):
                 Data.HidePurchaseButton(?PlayAnimations := PlayAnimations)
                 Data.ShowContainerProp(?PlayAnimations := PlayAnimations)
-            # if ( Data := UpgradeData[2]):
-            #     Data.ShowPurchaseButton()
         
         else if ( CurrentLevel = 2, TycoonManager := Owner.MaybeTycoonManager?):
             PumpkinCarvingWorker.Init(Owner, TycoonManager, PumpkinCarvingManager)

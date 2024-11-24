@@ -35,6 +35,7 @@ tycoon_manager<public> := class(creative_device, resetable):
 
     RebirthEvent : event() = event(){}
     TycoonResetEvent : event() = event(){}
+    ClaimedEvent : event(custom_player) = event(custom_player){}
     TycoonBuildingPurchasedEvent<public> : event(tycoon_building_purchase_result) = event(tycoon_building_purchase_result){}
     TycoonBuildingUpgradedEvent<public> : event(tycoon_building_upgrade_result) = event(tycoon_building_upgrade_result){}
     SecretCollectiblesManager<public> : secret_collectibles_manager = secret_collectibles_manager{}
@@ -121,6 +122,7 @@ tycoon_manager<public> := class(creative_device, resetable):
 
     StartTycoon(Owner : custom_player, GameManager : game_manager)<suspends> : void =
         Print("Starting TycooN!")
+        ClaimedEvent.Signal(Owner)
         set IsOccupied = true
         GameManager.PVPManager.SetPVPEnabledState(Owner, true)
         PlayerStats := PlayerStatsManager.GetStats(Owner.Player)
@@ -145,7 +147,6 @@ tycoon_manager<public> := class(creative_device, resetable):
         
     Update(Owner : custom_player, GameManager : game_manager)<suspends> : void =
         race:
-            Sleep(Inf)
             DoSaveLoop(Owner)
             loop: <# Rebirth when player rebirts lol #>
                 Agent := TycoonDevices.RebirthButton.InteractedWithEvent.Await()
@@ -182,7 +183,7 @@ tycoon_manager<public> := class(creative_device, resetable):
                 Sleep(5.0)
                 set PurchaseButtonPosition = Purchasable.GetPurchaseButton().GetTransform().Translation
             loop:
-                Sleep(0.0) 
+                Sleep(0.1) 
                 if:
                     Abs(Owner.FortCharacter.GetTransform().Translation.X - PurchaseButtonPosition.X) <= ButtonRadius
                     Abs(Owner.FortCharacter.GetTransform().Translation.Y - PurchaseButtonPosition.Y) <= ButtonRadius
@@ -381,8 +382,7 @@ tycoon_manager<public> := class(creative_device, resetable):
             SaveManager.RemoveUnlockedBuilding(TycoonBuilding)
             SaveManager.AddUpgradableBuilding(TycoonBuilding, Level)
             Sleep(0.0)
-        
-        
+         
         RebirthManager.LoadData(Owner, Self, PlayerStats)
         CurrencyCollector.SetStoredCash(PlayerStats.BuildingStats.CurrencyCollectorCash)
 

@@ -201,6 +201,10 @@ pumpkin_carving_manager<public> := class<concrete>:
         set SelectedTopID = -1
         set SelectedEyesID = -1
         set SelectedMouthID = -1
+        PumpkinBase.Hide()
+        PumpkinTop.Hide()
+        UpdateColorComponent(-1)
+        UpdateMouthComponent(-1)
         set ShouldShowTutorial = false
         PumpkinCarvingEndEvent.Signal()
 
@@ -232,6 +236,7 @@ pumpkin_carving_manager<public> := class<concrete>:
             CurrentCharacterDevice.Show()
             CurrentCharacterDevice.PlayEmote()
             PumpkinCarvingEndEvent.Await()
+            CurrentCharacterDevice.Hide()
 
             TicksToReady : int = GetRandomInt(30, 100)
             if ( CustomerCooldownProp.TeleportTo[DefaultCooldownPropTransform]) {}
@@ -320,7 +325,6 @@ pumpkin_carving_manager<public> := class<concrete>:
             set CurrentMouthDecal = option{Decal}
             Decal.Show()
         
-
     UpdateMetricTotalMap() : void =
         MetricATotal := (PumpkinColorMetricSheet[SelectedColorID][pumpkin_carving_metric.MetricA] or 0) + (PumpkinTopMetricSheet[SelectedTopID][pumpkin_carving_metric.MetricA] or 0) + (PumpkinEyesMetricSheet[SelectedEyesID][pumpkin_carving_metric.MetricA] or 0) + (PumpkinMouthMetricSheet[SelectedMouthID][pumpkin_carving_metric.MetricA] or 0)
         MetricBTotal := (PumpkinColorMetricSheet[SelectedColorID][pumpkin_carving_metric.MetricB] or 0) + (PumpkinTopMetricSheet[SelectedTopID][pumpkin_carving_metric.MetricB] or 0) + (PumpkinEyesMetricSheet[SelectedEyesID][pumpkin_carving_metric.MetricB] or 0) + (PumpkinMouthMetricSheet[SelectedMouthID][pumpkin_carving_metric.MetricB] or 0)
@@ -392,7 +396,6 @@ pumpkin_carving_manager<public> := class<concrete>:
         PumpkinBase.Hide()
         PumpkinTop.Hide()
         ResetEvent.Signal()
-
 
 pumpkin_carving_ui := class:
     Canvas : canvas = canvas{}

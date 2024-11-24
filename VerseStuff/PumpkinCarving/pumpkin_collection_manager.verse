@@ -73,7 +73,7 @@ pumpkin_collection_manager<public> := class<concrete>:
                     if ( PumpkinCarvingManager.ShouldShowTutorial?, Settings := PumpkinCarvingManager.TutorialSettings?):
                         spawn{ Settings.QueueDisplayDropOffTutorial(Owner, PumpkinDroppedOffEvent, ?DelayTime := 0.0) }
                     <# Pick up pumpkin #>
-                    PumpkinType := AwaitPumpkinHarvest()
+                    PumpkinType := AwaitPumpkinHarvest(?PumpkinTypeOverride := option{PumpkinCarvingManager.ShouldShowTutorial? and pumpkin_stock_type.Perfect})
                     case(PumpkinType):
                         pumpkin_stock_type.Rotten => {CarryingPumpkinHud.SetText(RottenPumpkinMessage); if ( PumpkinVFX := CarryingPumpkinVFXPowerups[0]) then PumpkinVFX.Pickup(Owner.Player)}
                         pumpkin_stock_type.Good => {CarryingPumpkinHud.SetText(GoodPumpkinMessage); if ( PumpkinVFX := CarryingPumpkinVFXPowerups[1]) then PumpkinVFX.Pickup(Owner.Player)}
@@ -109,8 +109,13 @@ pumpkin_collection_manager<public> := class<concrete>:
                 PumpkinCarvingManager.PumpkinRestockedEvent.Await()
                 UpdatePumpkinStockVisuals(PumpkinCarvingManager.PumpkinStockQueue.GetSize(), PumpkinCarvingManager.MaxStock)
                 
-    AwaitPumpkinHarvest()<suspends> : pumpkin_stock_type =
-        pumpkin_stock_type.Good
+    AwaitPumpkinHarvest(?PumpkinTypeOverride : ?pumpkin_stock_type = false)<suspends> : pumpkin_stock_type =
+        if ( Type := PumpkinTypeOverride?) then return Type
+        case(GetRandomInt(0, 2)):
+            0 => pumpkin_stock_type.Rotten
+            1 => pumpkin_stock_type.Good
+            2 => pumpkin_stock_type.Perfect
+            _ => pumpkin_stock_type.Good
 
     Reset<public> () : void =
         {}
